@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OrdenIngresoLogisticaPersistenceAdapter implements OrdenIngresoLogisticaPort {
+public class BaseOrdenIngresoPersistenceAdapter implements OrdenIngresoLogisticaPort {
     private final OrdenIngresoRepository ordenIngresoRepository;
     private final ArticuloRepository articuloRepository;
     private final DetailsIngresoRepository detalleRepository;

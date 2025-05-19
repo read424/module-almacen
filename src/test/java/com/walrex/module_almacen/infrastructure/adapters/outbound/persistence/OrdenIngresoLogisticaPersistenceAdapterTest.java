@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OrdenIngresoLogisticaPersistenceAdapterTest extends AbstractPostgreSQLContainerTest {
 
     @Autowired
-    private OrdenIngresoLogisticaPersistenceAdapter adapter;
+    private BaseOrdenIngresoPersistenceAdapter adapter;
 
     // Inyectar los repositories directamente
     @Autowired
