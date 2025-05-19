@@ -3,6 +3,7 @@
 
 .idea
 target
+logs
 HELP.md
 
 # Log file
