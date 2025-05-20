@@ -365,7 +365,27 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         verifyNoInteractions(articuloRepository);
     }
 
+    @Test
+    void buscarInfoConversion_DeberiaRetornarError_CuandoNoHayInformacion() {
+        // Arrange
+        when(articuloRepository.getInfoConversionArticulo(anyInt(), anyInt()))
+                .thenReturn(Mono.empty());
 
+        // Invocar directamente el método privado
+        Mono<ArticuloEntity> resultado = adapter.testBuscarInfoConversion(detalle, ordenIngreso);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ResponseStatusException &&
+                                ((ResponseStatusException) throwable).getStatusCode() == HttpStatus.BAD_REQUEST &&
+                                ((ResponseStatusException) throwable).getReason().contains("No se encontró información de conversión")
+                )
+                .verify();
+
+        // Verify
+        verify(articuloRepository).getInfoConversionArticulo(anyInt(), anyInt());
+    }
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
     private static class TestOrdenIngresoPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
