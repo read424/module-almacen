@@ -251,6 +251,30 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         verifyNoInteractions(detalleRepository);
     }
 
+    @Test
+    void guardarOrdenIngresoLogistica_DeberiaManejarErrorGeneral_CuandoOcurreExcepcion() {
+        // Arrange
+        detalle = crearDetalleOrdenIngreso();
+        List<DetalleOrdenIngreso> detalles = new ArrayList<>();
+        detalles.add(detalle);
+        ordenIngreso.setDetalles(detalles);
+
+        when(mapper.toEntity(any(OrdenIngreso.class))).thenReturn(ordenIngresoEntity);
+        RuntimeException generalException = new RuntimeException("Error general");
+        when(ordenIngresoRepository.save(any(OrdenIngresoEntity.class))).thenReturn(Mono.error(generalException));
+
+        // Act & Assert
+        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof OrdenIngresoException &&
+                                throwable.getMessage().contains("Error no esperado")
+                )
+                .verify();
+
+        // Verify
+        verify(ordenIngresoRepository).save(any(OrdenIngresoEntity.class));
+        verifyNoInteractions(detalleRepository);
+    }
 
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
