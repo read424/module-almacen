@@ -154,7 +154,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
                 .idArticulo(289)
                 .idUnidad(1)
                 .idUnidadConsumo(6)
-                .valorConv(1)
+                .valorConv(3)
                 .isMultiplo("1")
                 .stock(BigDecimal.valueOf(100.00))
                 .build();
@@ -308,7 +308,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
                     // Aunque no se aplique conversión, idUnidadSalida debería establecerse igual a idUnidad
                     return result.getIdUnidadSalida() == 6 && // Debe tomar el idUnidadConsumo de articuloEntity
                             "1".equals(result.getArticulo().getIs_multiplo()) &&
-                            result.getArticulo().getValor_conv() == 1;
+                            result.getArticulo().getValor_conv() == 3;
                 })
                 .verifyComplete();
 
@@ -385,6 +385,48 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
 
         // Verify
         verify(articuloRepository).getInfoConversionArticulo(anyInt(), anyInt());
+    }
+
+    @Test
+    void aplicarConversion_DeberiaEstablecerValores_CuandoUnidadesDiferentes() {
+        // Arrange
+        DetalleOrdenIngreso detalleTest = DetalleOrdenIngreso.builder()
+                .articulo(Articulo.builder().id(1).build())
+                .idUnidad(1) // Diferente a idUnidadConsumo (2)
+                .build();
+
+        // Invocar directamente el método privado
+        Mono<DetalleOrdenIngreso> resultado = adapter.testAplicarConversion(detalleTest, articuloEntity);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result ->
+                        result.getIdUnidadSalida() == 6 &&
+                                "1".equals(result.getArticulo().getIs_multiplo()) &&
+                                result.getArticulo().getValor_conv() == 3 &&
+                                result.getArticulo().getStock().compareTo(BigDecimal.valueOf(100.000)) == 0
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    void aplicarConversion_DeberiaUsarMismaUnidad_CuandoUnidadesIguales() {
+        // Arrange
+        DetalleOrdenIngreso detalleTest = DetalleOrdenIngreso.builder()
+                .articulo(Articulo.builder().id(289).build())
+                .idUnidad(1) //
+                .build();
+
+        // Invocar directamente el método privado
+        Mono<DetalleOrdenIngreso> resultado = adapter.testAplicarConversion(detalleTest, articuloEntity);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result ->
+                        result.getIdUnidadSalida() == 6 && // Debe ser igual a idUnidad
+                                result.getArticulo().getId() == 289
+                )
+                .verifyComplete();
     }
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
