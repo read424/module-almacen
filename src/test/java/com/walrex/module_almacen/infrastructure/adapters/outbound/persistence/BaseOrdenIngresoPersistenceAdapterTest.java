@@ -55,8 +55,9 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
 
     // Objetos de prueba comunes
     private OrdenIngreso ordenIngreso;
-    private OrdenIngresoEntity ordenIngresoEntity;
     private DetalleOrdenIngreso detalle;
+
+    private OrdenIngresoEntity ordenIngresoEntity;
     private DetailsIngresoEntity detalleEntity;
     private ArticuloEntity articuloEntity;
 
@@ -120,6 +121,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
                 .build();
     }
 
+
     @BeforeEach
     void setUp() {
         // Inicializar el adaptador con los mocks
@@ -161,6 +163,8 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         ordenIngreso = crearOrdenIngresoBase();
 
         ordenIngresoEntity = crearOrdenIngresoEntity();
+
+        detalleEntity = crearDetalleProducto();
     }
 
     @Test
@@ -179,6 +183,46 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
 
         // Verify
         verifyNoInteractions(ordenIngresoRepository);
+    }
+
+    @Test
+    void guardarOrdenIngresoLogistica_DeberiaGuardarOrdenYDetalles_CuandoDatosValidos() {
+        // Arrange
+        detalle = crearDetalleOrdenIngreso();
+        List<DetalleOrdenIngreso> detalles = new ArrayList<>();
+        detalles.add(detalle);
+        ordenIngreso.setId(1);
+        ordenIngreso.setDetalles(detalles);
+        detalleEntity.setId(1L);
+
+        // Configurar comportamiento para ArticuloRepository.getInfoConversionArticulo
+        when(articuloRepository.getInfoConversionArticulo(anyInt(), anyInt()))
+                .thenReturn(Mono.just(articuloEntity));
+        when(mapper.toEntity(any(OrdenIngreso.class))).thenReturn(ordenIngresoEntity);
+        when(ordenIngresoRepository.save(any(OrdenIngresoEntity.class))).thenReturn(Mono.just(ordenIngresoEntity));
+        when(mapper.toDomain(any(OrdenIngresoEntity.class))).thenReturn(ordenIngreso);
+
+        when(articuloIngresoLogisticaMapper.toEntity(any(DetalleOrdenIngreso.class))).thenReturn(detalleEntity);
+        when(detalleRepository.save(any(DetailsIngresoEntity.class))).thenReturn(Mono.just(detalleEntity));
+
+        // Mock procesarDetalleGuardado
+        adapter.setReturnDetalle(detalle);
+
+        // Act & Assert
+        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
+                .expectNextMatches(result ->
+                        result.getId() == 1 &&
+                                result.getDetalles().size() == 1 &&
+                                result.getDetalles().get(0).getArticulo().getId() == 289
+                )
+                .verifyComplete();
+
+        // Verify
+        verify(mapper).toEntity(any(OrdenIngreso.class));
+        verify(ordenIngresoRepository).save(any(OrdenIngresoEntity.class));
+        verify(mapper).toDomain(any(OrdenIngresoEntity.class));
+        verify(articuloIngresoLogisticaMapper).toEntity(any(DetalleOrdenIngreso.class));
+        verify(detalleRepository).save(any(DetailsIngresoEntity.class));
     }
 
     // Clase interna para pruebas que implementa la clase abstracta
