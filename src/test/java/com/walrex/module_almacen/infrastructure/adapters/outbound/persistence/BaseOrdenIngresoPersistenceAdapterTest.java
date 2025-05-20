@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -169,7 +170,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
-    @Order(1)
     void guardarOrdenIngresoLogistica_DeberiaRetornarError_CuandoNoHayDetalles() {
         // Arrange
         OrdenIngreso ordenSinDetalles = crearOrdenIngresoBase();
@@ -188,7 +188,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
-    @Order(2)
     void guardarOrdenIngresoLogistica_DeberiaGuardarOrdenYDetalles_CuandoDatosValidos() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -229,7 +228,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
-    @Order(3)
     void guardarOrdenIngresoLogistica_DeberiaManejarErrorR2dbc_CuandoRepositorioFalla() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -256,7 +254,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
-    @Order(4)
     void guardarOrdenIngresoLogistica_DeberiaManejarErrorGeneral_CuandoOcurreExcepcion() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -282,7 +279,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
-    @Order(5)
     void procesarDetalle_DeberiaAplicarConversion_CuandoIdUnidadSalidaEsNulo() {
         // Arrange
         ordenIngreso.setId(1);
@@ -309,7 +305,6 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         // Act & Assert
         StepVerifier.create(resultado)
                 .expectNextMatches(result ->{
-                    System.out.println("IdUnidadSalida: " + result.getIdUnidadSalida());
                     // Aunque no se aplique conversión, idUnidadSalida debería establecerse igual a idUnidad
                     return result.getIdUnidadSalida() == 6 && // Debe tomar el idUnidadConsumo de articuloEntity
                             "1".equals(result.getArticulo().getIs_multiplo()) &&
@@ -320,6 +315,54 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         // Verify
         verify(articuloRepository).getInfoConversionArticulo(anyInt(), anyInt());
         verify(detalleRepository).save(any(DetailsIngresoEntity.class));
+    }
+
+    @Test
+    void procesarDetalle_DeberiaUsarIdUnidadSalidaExistente_CuandoNoEsNulo() {
+        // Arrange
+        ordenIngreso.setId(1);
+        detalleEntity.setId(1L);
+
+        // Crear un detalle con idUnidadSalida ya definido (no nulo)
+        DetalleOrdenIngreso detalleConIdUnidadSalida = DetalleOrdenIngreso.builder()
+                .articulo(Articulo.builder()
+                        .id(289)
+                        .is_multiplo("1")
+                        .valor_conv(1)
+                        .stock(BigDecimal.valueOf(100.0))
+                        .build())
+                .idUnidad(1)
+                .idUnidadSalida(3) // Valor no nulo, ya definido
+                .cantidad(BigDecimal.valueOf(240.000))
+                .build();
+
+        // Configurar comportamiento para guardarDetalleOrdenIngreso
+        when(articuloIngresoLogisticaMapper.toEntity(any(DetalleOrdenIngreso.class))).thenReturn(detalleEntity);
+        when(detalleRepository.save(any(DetailsIngresoEntity.class))).thenReturn(Mono.just(detalleEntity));
+
+        // Configurar qué devuelve procesarDetalleGuardado
+        adapter.setReturnDetalle(detalleConIdUnidadSalida);
+
+        // Invocar directamente el método privado
+        Mono<DetalleOrdenIngreso> resultado = adapter.testProcesarDetalle(detalleConIdUnidadSalida, ordenIngreso);
+
+        // Act & Assert con información de depuración
+        StepVerifier.create(resultado)
+                .consumeNextWith(result -> {
+                    // Validaciones
+                    assertEquals(3, result.getIdUnidadSalida(),
+                            "idUnidadSalida debería mantener su valor original");
+                    assertEquals(BigDecimal.valueOf(240.000).setScale(3), result.getCantidad().setScale(3),
+                            "La cantidad debería mantenerse igual");
+                })
+                .verifyComplete();
+
+        // Verificar que se llamaron los métodos esperados
+        verify(articuloIngresoLogisticaMapper).toEntity(any(DetalleOrdenIngreso.class));
+        verify(detalleRepository).save(any(DetailsIngresoEntity.class));
+
+        // Verificar que NO se llamó a buscarInfoConversion (usando articuloRepository)
+        verifyNoInteractions(articuloRepository);
     }
 
 
