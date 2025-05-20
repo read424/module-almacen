@@ -225,6 +225,33 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         verify(detalleRepository).save(any(DetailsIngresoEntity.class));
     }
 
+    @Test
+    void guardarOrdenIngresoLogistica_DeberiaManejarErrorR2dbc_CuandoRepositorioFalla() {
+        // Arrange
+        detalle = crearDetalleOrdenIngreso();
+        List<DetalleOrdenIngreso> detalles = new ArrayList<>();
+        detalles.add(detalle);
+        ordenIngreso.setDetalles(detalles);
+
+        when(mapper.toEntity(any(OrdenIngreso.class))).thenReturn(ordenIngresoEntity);
+        R2dbcDataIntegrityViolationException dbException = mock(R2dbcDataIntegrityViolationException.class);
+        when(dbException.getMessage()).thenReturn("Error de prueba");
+        when(ordenIngresoRepository.save(any(OrdenIngresoEntity.class))).thenReturn(Mono.error(dbException));
+
+        // Act & Assert
+        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
+                .expectErrorMatches(throwable ->
+                        throwable instanceof OrdenIngresoException &&
+                                throwable.getMessage().contains("Error de integridad de datos")
+                )
+                .verify();
+
+        // Verify
+        verify(ordenIngresoRepository).save(any(OrdenIngresoEntity.class));
+        verifyNoInteractions(detalleRepository);
+    }
+
+
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
     private static class TestOrdenIngresoPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
