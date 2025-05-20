@@ -13,6 +13,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.re
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -168,6 +169,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
+    @Order(1)
     void guardarOrdenIngresoLogistica_DeberiaRetornarError_CuandoNoHayDetalles() {
         // Arrange
         OrdenIngreso ordenSinDetalles = crearOrdenIngresoBase();
@@ -186,6 +188,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
+    @Order(2)
     void guardarOrdenIngresoLogistica_DeberiaGuardarOrdenYDetalles_CuandoDatosValidos() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -226,6 +229,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
+    @Order(3)
     void guardarOrdenIngresoLogistica_DeberiaManejarErrorR2dbc_CuandoRepositorioFalla() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -252,6 +256,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     }
 
     @Test
+    @Order(4)
     void guardarOrdenIngresoLogistica_DeberiaManejarErrorGeneral_CuandoOcurreExcepcion() {
         // Arrange
         detalle = crearDetalleOrdenIngreso();
@@ -275,6 +280,48 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         verify(ordenIngresoRepository).save(any(OrdenIngresoEntity.class));
         verifyNoInteractions(detalleRepository);
     }
+
+    @Test
+    @Order(5)
+    void procesarDetalle_DeberiaAplicarConversion_CuandoIdUnidadSalidaEsNulo() {
+        // Arrange
+        ordenIngreso.setId(1);
+        detalleEntity.setId(1L);
+
+        DetalleOrdenIngreso detalleConversionNull = DetalleOrdenIngreso.builder()
+                .articulo(Articulo.builder().id(289).build())
+                .idUnidad(1)
+                .idUnidadSalida(null)
+                .cantidad(BigDecimal.valueOf(240.000))
+                .build();
+
+        when(articuloRepository.getInfoConversionArticulo(anyInt(), anyInt()))
+                .thenReturn(Mono.just(articuloEntity));
+
+        when(articuloIngresoLogisticaMapper.toEntity(any(DetalleOrdenIngreso.class))).thenReturn(detalleEntity);
+        when(detalleRepository.save(any(DetailsIngresoEntity.class))).thenReturn(Mono.just(detalleEntity));
+
+        adapter.setReturnDetalle(detalleConversionNull);
+
+        // Invocar directamente el método privado a través de la clase de prueba
+        Mono<DetalleOrdenIngreso> resultado = adapter.testProcesarDetalle(detalleConversionNull, ordenIngreso);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result ->{
+                    System.out.println("IdUnidadSalida: " + result.getIdUnidadSalida());
+                    // Aunque no se aplique conversión, idUnidadSalida debería establecerse igual a idUnidad
+                    return result.getIdUnidadSalida() == 6 && // Debe tomar el idUnidadConsumo de articuloEntity
+                            "1".equals(result.getArticulo().getIs_multiplo()) &&
+                            result.getArticulo().getValor_conv() == 1;
+                })
+                .verifyComplete();
+
+        // Verify
+        verify(articuloRepository).getInfoConversionArticulo(anyInt(), anyInt());
+        verify(detalleRepository).save(any(DetailsIngresoEntity.class));
+    }
+
 
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
