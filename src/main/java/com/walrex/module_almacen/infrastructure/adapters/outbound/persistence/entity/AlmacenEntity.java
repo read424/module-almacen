@@ -17,7 +17,8 @@ import java.util.Date;
 @Table("almacenes.almacen")
 public class AlmacenEntity {
     @Id
-    private Long id_almacen;
+    @Column("id_almacen")
+    private Long id;
 
     @Column("id_tipoalmacen")
     private Integer tipo_almacen;
