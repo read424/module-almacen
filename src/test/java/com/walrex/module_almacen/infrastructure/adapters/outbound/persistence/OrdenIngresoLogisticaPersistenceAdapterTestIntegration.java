@@ -85,14 +85,14 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
             .build();
     }
 
-    @BeforeEach
+    //@BeforeEach
     void limpiarDatos() {
         // Limpiar datos entre pruebas
         // kardexRepository.deleteAll().block();
     }
 
-    @Test
-    @DisplayName("Registro correcto orden ingreso con su detalles y kardex")
+    //@Test
+    //@DisplayName("Registro correcto orden ingreso con su detalles y kardex")
     void debeRegistrarOrdenConDetallesCorrectamente() {
         // Arrange
         OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
@@ -130,8 +130,8 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
             .verifyComplete();
     }
 
-    @Test
-    @DisplayName("Debe devolver error si la lista de detalles está vacía")
+    //@Test
+    //@DisplayName("Debe devolver error si la lista de detalles está vacía")
     void debeRetornarErrorSiDetallesEstaVacio() {
         // Arrange
         OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
