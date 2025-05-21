@@ -428,6 +428,34 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
                 )
                 .verifyComplete();
     }
+
+    @Test
+    void guardarDetalleOrdenIngreso_DeberiaGuardarDetalle_CuandoDatosValidos() {
+        // Arrange
+        ordenIngreso.setId(1);
+        detalleEntity.setId(1L);
+        when(articuloIngresoLogisticaMapper.toEntity(any(DetalleOrdenIngreso.class))).thenReturn(detalleEntity);
+        when(detalleRepository.save(any(DetailsIngresoEntity.class))).thenReturn(Mono.just(detalleEntity));
+
+        adapter.setReturnDetalle(detalle);
+
+        // Invocar directamente el método privado
+        Mono<DetalleOrdenIngreso> resultado = adapter.testGuardarDetalleOrdenIngreso(detalle, ordenIngreso);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result -> {
+                    System.out.println();
+                    return result.getArticulo().getId() == 289 &&
+                            result.getIdUnidad() == 1;
+                })
+                .verifyComplete();
+
+        // Verify
+        verify(articuloIngresoLogisticaMapper).toEntity(any(DetalleOrdenIngreso.class));
+        verify(detalleRepository).save(any(DetailsIngresoEntity.class));
+    }
+    
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
     private static class TestOrdenIngresoPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
