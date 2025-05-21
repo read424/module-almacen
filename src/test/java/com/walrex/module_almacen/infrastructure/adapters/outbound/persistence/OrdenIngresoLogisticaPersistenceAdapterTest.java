@@ -1,392 +1,242 @@
 package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
-import com.walrex.module_almacen.ModuleAlmacenApplication;
-import com.walrex.module_almacen.common.Exception.OrdenIngresoException;
-import com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
-import com.walrex.module_almacen.config.R2dbcTestConfig;
 import com.walrex.module_almacen.domain.model.*;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailsIngresoEntity;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.KardexEntity;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.ArticuloIngresoLogisticaMapper;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenIngresoEntityMapper;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.KardexRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
+import io.r2dbc.spi.R2dbcException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.server.ResponseStatusException;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest(
-    classes = ModuleAlmacenApplication.class
-)
-@Import(R2dbcTestConfig.class)
-@ActiveProfiles("test-almacenes")
-public class OrdenIngresoLogisticaPersistenceAdapterTest extends AbstractPostgreSQLContainerTest {
-
-    @Autowired
-    private BaseOrdenIngresoPersistenceAdapter adapter;
-
-    // Inyectar los repositories directamente
-    @Autowired
+@ExtendWith(MockitoExtension.class)
+public class OrdenIngresoLogisticaPersistenceAdapterTest {
+    @Mock
     private OrdenIngresoRepository ordenIngresoRepository;
 
-    @Autowired
+    @Mock
+    private ArticuloRepository articuloRepository;
+
+    @Mock
     private DetailsIngresoRepository detalleRepository;
 
-    @Autowired
+    @Mock
     private KardexRepository kardexRepository;
 
-    // Datos comunes para las pruebas
-    private final String serieDocumento = "F001";
-    private final String numeroDocumento = "1120";
+    @Mock
+    private OrdenIngresoEntityMapper mapper;
 
-    // Detalle de orden de prueba
-    private DetalleOrdenIngreso crearDetalleOrdenIngreso() {
-        return DetalleOrdenIngreso.builder()
-            .articulo(Articulo.builder()
-                .id(289)
-                .build()
-            )
-            .idUnidad(1)
-            .lote("001120-1")
-            .cantidad(BigDecimal.valueOf(240.0000))
-            .idTipoProducto(1)
-            .costo(BigDecimal.valueOf(2.15))
-            .idMoneda(2)
-            .build();
-    }
+    @Mock
+    private ArticuloIngresoLogisticaMapper articuloIngresoLogisticaMapper;
 
-    // Orden de ingreso base para las pruebas
-    private OrdenIngreso crearOrdenIngresoBase() {
-        return OrdenIngreso.builder()
-            .idCliente(86)
-            .motivo(Motivo.builder().idMotivo(4).descMotivo("COMPRAS").build())
-            .comprobante(1)
-            .codSerie("F001")
-            .nroComprobante("1120")
-            .fechaIngreso(LocalDate.parse("2025-03-31"))
-            .fechaComprobante(LocalDate.parse("2025-03-31"))
-            .observacion("")
-            .almacen(Almacen.builder().idAlmacen(1).build())
-            .idOrdenCompra(13232)
-            .detalles(Collections.emptyList())
-            .build();
-    }
+    private OrdenIngresoLogisticaPersistenceAdapter adapter;
+
+    // Objetos de prueba comunes
+    private OrdenIngreso ordenIngreso;
+    private DetalleOrdenIngreso detalle;
+    private DetalleOrdenIngreso detalleConversionDiferente;
+    private DetailsIngresoEntity detalleEntity;
+    private KardexEntity kardexEntity;
 
     @BeforeEach
-    void limpiarDatos() {
-        // Limpiar datos entre pruebas
-        // kardexRepository.deleteAll().block();
-    }
-
-    @Test
-    @DisplayName("Registro correcto orden ingreso con su detalles y kardex")
-    void debeRegistrarOrdenConDetallesCorrectamente() {
-        // Arrange
-        OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
-        ordenIngreso.setDetalles(List.of(crearDetalleOrdenIngreso()));
-
-        // Act & Assert
-        StepVerifier.create(
-                adapter.guardarOrdenIngresoLogistica(ordenIngreso)
-                    .doOnNext(result -> System.out.println("✅ Orden guardada: " + result))
-                    .doOnError(error -> System.err.println("❌ Error: " + error))
-            )
-            .expectNextCount(1) // Solo verifica que emite un elemento
-            .verifyComplete();
-
-        kardexRepository.findByIdArticuloAndIdAlmacen(289, 1)
-            .as(StepVerifier::create)
-            .expectNextMatches(kardex -> {
-                // Verificar los datos específicos del Kardex
-                boolean detallesKardexOk =
-                        kardex.getTipo_movimiento() == 1 && // 1 = ingreso
-                                kardex.getId_articulo() == 289 &&
-                                kardex.getId_almacen() == 1 &&
-                                // Comprobar que el detalle incluye el código de ingreso y el motivo
-                                kardex.getDetalle().contains("COMPRAS");
-                // Verificar conversión: 240 * 10^3 = 240000 (factor conv = 3)
-                boolean conversionCorrecta =
-                        kardex.getSaldoLote().compareTo(new BigDecimal("240000.000000")) == 0;
-
-                // Stock original (544982.9) + cantidad convertida (240000) = 784982.9
-                boolean stockCorrecto =
-                        kardex.getSaldo_actual().compareTo(new BigDecimal("784982.900000")) == 0;
-
-                return detallesKardexOk && conversionCorrecta && stockCorrecto;
-            })
-            .verifyComplete();
-    }
-
-    @Test
-    @DisplayName("Debe devolver error si la lista de detalles está vacía")
-    void debeRetornarErrorSiDetallesEstaVacio() {
-        // Arrange
-        OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
-        ordenIngreso.setDetalles(Collections.emptyList());
-
-        // Act & Assert
-        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
-                .expectErrorSatisfies(error -> {
-                    assertThat(error)
-                        .isInstanceOf(ResponseStatusException.class)
-                        .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
-                        .hasMessageContaining("La orden de ingreso debe tener al menos un detalle");
-                })
-                .verify();
-    }
-
-    //@Test
-    //@DisplayName("Debe devolver error si el ID de almacén está vacío")
-    void debeRetornarErrorSiAlmacenEstaVacio() {
-        // Arrange
-        OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
-        // Establecer almacén sin ID
-        ordenIngreso.setAlmacen(Almacen.builder().build());
-        ordenIngreso.setDetalles(List.of(crearDetalleOrdenIngreso()));
-
-        // Act & Assert
-        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
-                .expectErrorSatisfies(error -> {
-                    // Log detallado del error para diagnóstico
-                    System.out.println("Error capturado: " + error.getClass().getName());
-                    System.out.println("Mensaje: " + error.getMessage());
-                    if (error.getCause() != null) {
-                        System.out.println("Causa: " + error.getCause().getClass().getName());
-                        System.out.println("Mensaje causa: " + error.getCause().getMessage());
-                    }
-                    // 1. Verificar que el error se ha traducido a OrdenIngresoException
-                    assertTrue(error instanceof OrdenIngresoException,
-                            "El error debe ser de tipo OrdenIngresoException, pero es: " +
-                                    error.getClass().getName());
-
-                    // 2. Extraer y verificar la causa raíz
-                    Throwable rootCause = error;
-                    while (rootCause.getCause() != null) {
-                        rootCause = rootCause.getCause();
-                    }
-
-                    // 3. Verificar el mensaje de error
-                    String errorMessage = error.getMessage().toLowerCase();
-                    String rootCauseMessage = rootCause.getMessage() != null ?
-                            rootCause.getMessage().toLowerCase() : "";
-
-                    // 4. Comprobar si alguno de los mensajes contiene indicaciones sobre el problema
-                    boolean mensajeContieneAlmacen =
-                            errorMessage.contains("almac") || rootCauseMessage.contains("almac");
-                    boolean mensajeContieneNull =
-                            errorMessage.contains("null") || rootCauseMessage.contains("null") ||
-                                    errorMessage.contains("vacío") || rootCauseMessage.contains("vacío") ||
-                                    errorMessage.contains("vacio") || rootCauseMessage.contains("vacio");
-                    boolean mensajeContieneConstraint =
-                            errorMessage.contains("constraint") || rootCauseMessage.contains("constraint") ||
-                                    errorMessage.contains("violation") || rootCauseMessage.contains("violation") ||
-                                    errorMessage.contains("exception") || rootCauseMessage.contains("exception");
-
-                    assertTrue(mensajeContieneAlmacen || mensajeContieneNull || mensajeContieneConstraint,
-                            "El mensaje debe indicar el problema con el almacén: " +
-                                    error.getMessage() + " / Causa raíz: " + rootCauseMessage);
-
-                    // 5. Si se puede identificar el tipo específico de error de PostgreSQL
-                    if (rootCause.getClass().getName().contains("R2dbc") &&
-                            rootCauseMessage.contains("23")) {  // Los errores 23xxx son de integridad
-                        System.out.println("Detectado error PostgreSQL de integridad");
-                    }
-                })
-                .verify();
-
-        // Verificar que no se hayan creado registros
-        StepVerifier.create(ordenIngresoRepository.count())
-                .expectNext(0L)
-                .verifyComplete();
-    }
-
-    //@Test
-    //@DisplayName("Debe almacenar correctamente los cálculos en Kardex")
-    void debeAlmacenarCalculosCorrectosEnKardex() {
-        // Arrange - Crear orden con detalle que requiere conversión
-        OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
-
-        // Detalle especial para probar los cálculos
-        DetalleOrdenIngreso detalle = DetalleOrdenIngreso.builder()
-                .articulo(Articulo.builder()
-                        .id(289)
-                        .codigo("PQ00080")
-                        .descripcion("SILTEX CONC")
-                        .valor_conv(3) // Factor de conversión 10^3
-                        .stock(new BigDecimal("544982.900000"))
-                        .build())
-                .idTipoProducto(1)
-                .idTipoProductoFamilia(10)
-                .idUnidad(1)  // Unidad de ingreso
-                .idUnidadSalida(2)  // Unidad de salida diferente
-                .idMoneda(1)
-                .cantidad(new BigDecimal("240.00"))
-                .excentoImp(false)
-                .costo(new BigDecimal("50.00"))
-                .montoTotal(new BigDecimal("12000.00"))
-                .detallesRollos(Collections.emptyList())
+    void setUp() {
+        // Inicializar el adaptador con los mocks
+        adapter = OrdenIngresoLogisticaPersistenceAdapter.builder()
+                .ordenIngresoRepository(ordenIngresoRepository)
+                .articuloRepository(articuloRepository)
+                .detalleRepository(detalleRepository)
+                .kardexRepository(kardexRepository)
+                .mapper(mapper)
+                .articuloIngresoLogisticaMapper(articuloIngresoLogisticaMapper)
                 .build();
 
-        ordenIngreso.setDetalles(List.of(detalle));
+        // Inicializar objetos comunes de prueba
+        Articulo articulo = Articulo.builder()
+                .id(289)
+                .is_multiplo("1")
+                .valor_conv(3) // Factor de conversión para pruebas
+                .stock(BigDecimal.valueOf(100.000))
+                .build();
+
+        // Detalle sin conversión (idUnidad = idUnidadSalida)
+        detalle = DetalleOrdenIngreso.builder()
+                .articulo(articulo)
+                .idUnidad(1)
+                .idUnidadSalida(1) // Igual a idUnidad, sin conversión
+                .cantidad(new BigDecimal("240.000"))
+                .build();
+
+        // Detalle con conversión (idUnidad ≠ idUnidadSalida)
+        detalleConversionDiferente = DetalleOrdenIngreso.builder()
+                .articulo(articulo)
+                .idUnidad(1)
+                .idUnidadSalida(6) // Diferente a idUnidad, se aplicará conversión
+                .cantidad(BigDecimal.valueOf(240.000))
+                .build();
+
+        ordenIngreso = OrdenIngreso.builder()
+                .id(1)
+                .cod_ingreso("TEST-001")
+                .motivo(Motivo.builder().idMotivo(4).descMotivo("COMPRAS").build())
+                .fechaIngreso(LocalDate.of(2025, 3, 31))
+                .almacen(Almacen.builder().idAlmacen(1).build())
+                .build();
+
+        detalleEntity = DetailsIngresoEntity.builder()
+                .id(1L)
+                .id_ordeningreso(1L)
+                .id_articulo(289)
+                .id_unidad(1)
+                .cantidad(240.00)
+                .costo_compra(2.15)
+                .build();
+
+        kardexEntity = KardexEntity.builder()
+                .id_kardex(1L)
+                .tipo_movimiento(1)
+                .detalle("(TEST-001) - COMPRAS")
+                .cantidad(BigDecimal.valueOf(240.00))
+                .costo(BigDecimal.valueOf(2.15))
+                .fecha_movimiento(LocalDate.of(2025, 3, 31))
+                .build();
+    }
+
+    @Test
+    void procesarDetalleGuardado_DeberiaGuardarKardex_CuandoDatosValidos() {
+        // Arrange
+        when(kardexRepository.save(any(KardexEntity.class))).thenReturn(Mono.just(kardexEntity));
 
         // Act
-        adapter.guardarOrdenIngresoLogistica(ordenIngreso)
-                .as(StepVerifier::create)
-                .expectNextCount(1)
-                .verifyComplete();
+        Mono<DetalleOrdenIngreso> resultado = adapter.procesarDetalleGuardado(detalle, detalleEntity, ordenIngreso);
 
-        // Assert - Verificar cálculos en Kardex
-        kardexRepository.findByIdArticuloAndIdAlmacen(289, 1)
-                .as(StepVerifier::create)
-                .expectNextMatches(kardex -> {
-                    // Verificar datos básicos
-                    boolean datosBasicosOk =
-                            kardex.getTipo_movimiento() == 1 &&
-                                    kardex.getId_articulo() == 289 &&
-                                    kardex.getId_almacen() == 1;
-
-                    // Calcular valores esperados
-                    BigDecimal factorConversion = BigDecimal.valueOf(Math.pow(10, 3));
-                    BigDecimal cantidadIngresada = new BigDecimal("240.00");
-                    BigDecimal cantidadConvertida = cantidadIngresada.multiply(factorConversion)
-                            .setScale(6, RoundingMode.HALF_UP);
-                    BigDecimal stockOriginal = new BigDecimal("544982.900000");
-                    BigDecimal stockFinal = stockOriginal.add(cantidadConvertida)
-                            .setScale(6, RoundingMode.HALF_UP);
-                    BigDecimal costoUnitario = new BigDecimal("50.00");
-                    BigDecimal valorTotal = cantidadIngresada.multiply(costoUnitario)
-                            .setScale(2, RoundingMode.HALF_UP);
-
-                    // Comparar con valores reales
-                    boolean calculosCorrectos =
-                            kardex.getCantidad().compareTo(cantidadIngresada) == 0 &&
-                                    kardex.getCosto().compareTo(costoUnitario) == 0 &&
-                                    kardex.getValorTotal().compareTo(valorTotal) == 0 &&
-                                    kardex.getSaldoLote().compareTo(cantidadConvertida) == 0 &&
-                                    kardex.getSaldo_actual().compareTo(stockFinal) == 0;
-
-                    // Verificar relación con documento
-                    boolean relacionDocumentoOk = kardex.getId_documento() != null &&
-                            kardex.getId_detalle_documento() != null;
-
-                    // Log para depuración
-                    if (!calculosCorrectos) {
-                        System.out.println("Cantidad ingresada esperada: " + cantidadIngresada +
-                                ", real: " + kardex.getCantidad());
-                        System.out.println("Costo unitario esperado: " + costoUnitario +
-                                ", real: " + kardex.getCosto());
-                        System.out.println("Valor total esperado: " + valorTotal +
-                                ", real: " + kardex.getValorTotal());
-                        System.out.println("Saldo lote esperado: " + cantidadConvertida +
-                                ", real: " + kardex.getSaldoLote());
-                        System.out.println("Saldo actual esperado: " + stockFinal +
-                                ", real: " + kardex.getSaldo_actual());
-                    }
-
-                    return datosBasicosOk && calculosCorrectos && relacionDocumentoOk;
+        // Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result -> {
+                    // Verificar que el detalle tenga el ID actualizado
+                    return result.getId() == 1 &&
+                            result.getArticulo().getId() == 289;
                 })
                 .verifyComplete();
+
+        // Verify
+        verify(kardexRepository).save(any(KardexEntity.class));
     }
 
-    //@Test
-    //@DisplayName("Debe manejar correctamente excepciones R2dbcException")
-    void debeCapturarExcepcionesR2dbc() {
+    @Test
+    void procesarDetalleGuardado_DeberiaRetornarError_CuandoFallaGuardadoKardex() {
         // Arrange
-        OrdenIngreso ordenIngreso = crearOrdenIngresoBase();
+        R2dbcException dbException = mock(R2dbcException.class);
+        when(dbException.getMessage()).thenReturn("Error de base de datos");
+        when(kardexRepository.save(any(KardexEntity.class))).thenReturn(Mono.error(dbException));
 
-        // Crear detalle con datos que provocarán error en la base de datos
-        // Por ejemplo, un ID de artículo inexistente que viole una restricción de clave foránea
-        DetalleOrdenIngreso detalleConErrorFK = DetalleOrdenIngreso.builder()
-                .articulo(Articulo.builder()
-                        .id(999999) // ID inexistente - provocará violación de foreign key
-                        .codigo("INVALID")
-                        .descripcion("Artículo inexistente")
-                        .valor_conv(1)
-                        .stock(BigDecimal.ZERO)
-                        .build())
-                .idTipoProducto(1)
-                .idTipoProductoFamilia(10)
-                .idUnidad(1)
-                .idUnidadSalida(1)
-                .idMoneda(1)
-                .cantidad(new BigDecimal("10.00"))
-                .excentoImp(false)
-                .costo(new BigDecimal("100.00"))
-                .montoTotal(new BigDecimal("1000.00"))
-                .detallesRollos(Collections.emptyList())
-                .build();
+        // Act
+        Mono<DetalleOrdenIngreso> resultado = adapter.procesarDetalleGuardado(detalle, detalleEntity, ordenIngreso);
 
-        ordenIngreso.setDetalles(List.of(detalleConErrorFK));
-
-        // Act & Assert
-        StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
-                .expectErrorSatisfies(error -> {
-                    // Verificar que el error es del tipo OrdenIngresoException que envuelve un R2dbcException
-                    assertTrue(error instanceof OrdenIngresoException,
-                            "El error debe ser de tipo OrdenIngresoException");
-
-                    // Si el error tiene una causa, verificar que sea R2dbcException o derivado
-                    if (error.getCause() != null) {
-                        boolean isR2dbcError = false;
-                        Throwable cause = error.getCause();
-
-                        // Buscar en la cadena de causas
-                        while (cause != null && !isR2dbcError) {
-                            isR2dbcError = cause.getClass().getName().contains("R2dbc") ||
-                                    cause.getClass().getName().contains("DataIntegrityViolation");
-                            cause = cause.getCause();
-                        }
-
-                        assertTrue(isR2dbcError,
-                                "La causa raíz debe ser un error R2DBC o de integridad de datos");
-                    }
-
-                    // Verificar que el mensaje de error sea comprensible para el usuario
-                    String errorMessage = error.getMessage().toLowerCase();
-                    assertTrue(errorMessage.contains("error") ||
-                                    errorMessage.contains("registrar") ||
-                                    errorMessage.contains("detalle"),
-                            "El mensaje debe ser comprensible: " + error.getMessage());
-
-                    // Verificar que no se exponga información técnica de la base de datos en el mensaje principal
-                    assertFalse(errorMessage.contains("constraint") ||
-                                    errorMessage.contains("foreign key") ||
-                                    errorMessage.contains("sql"),
-                            "El mensaje no debe exponer detalles técnicos: " + error.getMessage());
-
-                    // Log para diagnóstico
-                    System.out.println("Error capturado (esperado en esta prueba): " + error.getMessage());
-                    if (error.getCause() != null) {
-                        System.out.println("Causa: " + error.getCause().getClass().getName() +
-                                ": " + error.getCause().getMessage());
-                    }
+        // Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable -> {
+                    // Verificar que se crea el error adecuado
+                    return throwable instanceof RuntimeException &&
+                            throwable.getMessage().contains("Error de base de datos al guardar el kardex");
                 })
                 .verify();
 
-        // Verificar que no queden datos parciales (la transacción debe haberse revertido)
-        StepVerifier.create(ordenIngresoRepository.count())
-                .expectNext(0L)
-                .verifyComplete();
+        // Verify
+        verify(kardexRepository).save(any(KardexEntity.class));
+    }
 
-        StepVerifier.create(detalleRepository.count())
-                .expectNext(0L)
-                .verifyComplete();
+    @Test
+    void procesarDetalleGuardado_DeberiaRetornarErrorGeneral_CuandoOcurreExcepcionNoEsperada() {
+        // Arrange
+        RuntimeException unexpectedException = new RuntimeException("Error inesperado");
+        when(kardexRepository.save(any(KardexEntity.class))).thenReturn(Mono.error(unexpectedException));
 
-        StepVerifier.create(kardexRepository.count())
-                .expectNext(0L)
-                .verifyComplete();
+        // Act
+        Mono<DetalleOrdenIngreso> resultado = adapter.procesarDetalleGuardado(detalle, detalleEntity, ordenIngreso);
+
+        // Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable -> {
+                    // Verificar que se crea el error adecuado
+                    return throwable instanceof RuntimeException &&
+                            throwable.getMessage().contains("Error no esperado al guardar el kardex");
+                })
+                .verify();
+
+        // Verify
+        verify(kardexRepository).save(any(KardexEntity.class));
+    }
+
+    @Test
+    void crearKardexEntity_DeberiaCrearKardexSinConversion_CuandoUnidadesIguales() {
+        // Act
+        KardexEntity resultado = adapter.crearKardexEntity(detalleEntity, detalle, ordenIngreso);
+
+        // Assert
+        // Comprobar que NO se aplicó conversión
+        assertEquals(BigDecimal.valueOf(240.000000).setScale(6, RoundingMode.HALF_UP),
+                resultado.getSaldoLote(),
+                "La cantidad convertida debería ser igual a la cantidad original");
+
+        assertEquals(BigDecimal.valueOf(340.000000).setScale(6, RoundingMode.HALF_UP),
+                resultado.getSaldo_actual(),
+                "El saldo actual debería ser la suma del stock y la cantidad sin conversión");
+
+        // Verificar otros campos
+        assertEquals("(TEST-001) - COMPRAS", resultado.getDetalle());
+        assertEquals(BigDecimal.valueOf(240.00 * 2.15), resultado.getValorTotal());
+        assertEquals(1, resultado.getTipo_movimiento());
+    }
+
+    @Test
+    void manejarErroresGuardadoKardex_DeberiaRetornarErrorR2dbc_CuandoExcepcionEsR2dbc() {
+        // Arrange
+        R2dbcException dbException = mock(R2dbcException.class);
+        when(dbException.getMessage()).thenReturn("Error de prueba");
+
+        // Act
+        Mono<KardexEntity> resultado = adapter.manejarErroresGuardadoKardex(dbException);
+
+        // Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable -> {
+                    return throwable instanceof RuntimeException &&
+                            throwable.getMessage().contains("Error de base de datos al guardar el kardex");
+                })
+                .verify();
+    }
+
+    @Test
+    void manejarErroresGuardadoKardex_DeberiaRetornarErrorGeneral_CuandoExcepcionNoEsR2dbc() {
+        // Arrange
+        RuntimeException generalException = new RuntimeException("Error general");
+
+        // Act
+        Mono<KardexEntity> resultado = adapter.manejarErroresGuardadoKardex(generalException);
+
+        // Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable -> {
+                    return throwable instanceof RuntimeException &&
+                            throwable.getMessage().contains("Error no esperado al guardar el kardex");
+                })
+                .verify();
     }
 }
