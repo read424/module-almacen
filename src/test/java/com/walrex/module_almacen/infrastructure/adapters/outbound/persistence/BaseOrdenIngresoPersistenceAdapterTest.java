@@ -455,7 +455,47 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
         verify(articuloIngresoLogisticaMapper).toEntity(any(DetalleOrdenIngreso.class));
         verify(detalleRepository).save(any(DetailsIngresoEntity.class));
     }
-    
+
+    @Test
+    void guardarDetalleOrdenIngreso_DeberiaManejarError_CuandoRepositorioFalla() {
+        // Arrange
+        ordenIngreso.setId(1);
+        when(articuloIngresoLogisticaMapper.toEntity(any(DetalleOrdenIngreso.class))).thenReturn(detalleEntity);
+
+        RuntimeException dbException = new RuntimeException("Error al guardar detalle");
+        when(detalleRepository.save(any(DetailsIngresoEntity.class))).thenReturn(Mono.error(dbException));
+
+        // Invocar directamente el método privado
+        Mono<DetalleOrdenIngreso> resultado = adapter.testGuardarDetalleOrdenIngreso(detalle, ordenIngreso);
+
+        // Act & Assert
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof OrdenIngresoException &&
+                                throwable.getMessage().contains("Error al registrar detalle")
+                )
+                .verify();
+
+        // Verify
+        verify(articuloIngresoLogisticaMapper).toEntity(any(DetalleOrdenIngreso.class));
+        verify(detalleRepository).save(any(DetailsIngresoEntity.class));
+    }
+
+    @Test
+    void actualizarIdDetalle_DeberiaRetornarDetalleConIdActualizado() {
+        // Arrange & Act
+        detalleEntity.setId(1L);
+        Mono<DetalleOrdenIngreso> resultado = adapter.actualizarIdDetalle(detalle, detalleEntity);
+
+        // Assert
+        StepVerifier.create(resultado)
+                .expectNextMatches(result ->
+                        result.getId() == 1 && // ID del detalleEntity
+                                result.getArticulo().getId() == 289
+                )
+                .verifyComplete();
+    }
+
     // Clase interna para pruebas que implementa la clase abstracta
     @SuperBuilder
     private static class TestOrdenIngresoPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
