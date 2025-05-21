@@ -109,15 +109,15 @@ public abstract class BaseOrdenIngresoPersistenceAdapter implements OrdenIngreso
     // Método para buscar información de conversión
     protected Mono<ArticuloEntity> buscarInfoConversion(DetalleOrdenIngreso detalle, OrdenIngreso ordenIngreso) {
         return articuloRepository.getInfoConversionArticulo(
-                        ordenIngreso.getAlmacen().getIdAlmacen(),
-                        detalle.getArticulo().getId()
+                    ordenIngreso.getAlmacen().getIdAlmacen(),
+                    detalle.getArticulo().getId()
                 )
                 .doOnNext(info -> log.info("✅ Información de conversión encontrada: {}", info))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "No se encontró información de conversión para el artículo: " +
-                                        detalle.getArticulo().getId()
-                        ))
+                        HttpStatus.BAD_REQUEST,
+                        "No se encontró información de conversión para el artículo: " +
+                                detalle.getArticulo().getId()
+                    ))
                 );
     }
 
@@ -162,29 +162,6 @@ public abstract class BaseOrdenIngresoPersistenceAdapter implements OrdenIngreso
     protected Mono<DetalleOrdenIngreso> actualizarIdDetalle(DetalleOrdenIngreso detalle, DetailsIngresoEntity savedDetalleEntity) {
         detalle.setId(savedDetalleEntity.getId().intValue());
         return Mono.just(detalle);
-    }
-
-    // Métodos para manejo de errores
-    private Mono<OrdenIngresoEntity> manejarErroresGuardadoOrden(Throwable ex) {
-        if (ex instanceof R2dbcException) {
-            String prefix;
-            if (ex instanceof R2dbcDataIntegrityViolationException) {
-                prefix = "Error de integridad de datos";
-            } else if (ex instanceof R2dbcBadGrammarException) {
-                prefix = "Error de sintaxis SQL";
-            } else if (ex instanceof R2dbcTransientResourceException) {
-                prefix = "Error transitorio de recursos";
-            } else {
-                prefix = "Error de base de datos";
-            }
-            String errorMsg = prefix + " al guardar la orden: " + ex.getMessage();
-            log.error(errorMsg, ex);
-            return Mono.error(new OrdenIngresoException(errorMsg, ex));
-        } else {
-            String errorMsg = "Error no esperado al guardar la orden: " + ex.getMessage();
-            log.error(errorMsg, ex);
-            return Mono.error(new OrdenIngresoException(errorMsg, ex));
-        }
     }
 
     private Mono<DetailsIngresoEntity> manejarErroresGuardadoDetalle(Throwable ex, DetalleOrdenIngreso detalle) {
