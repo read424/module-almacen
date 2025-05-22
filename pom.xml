@@ -273,6 +273,7 @@
 						<exclude>**/config/**</exclude>
 						<exclude>**/mapper/**</exclude>
 						<exclude>**/common/**</exclude>
+						<exclude>**/application/ports/**</exclude>
 					</excludes>
 				</configuration>
 				<executions>
