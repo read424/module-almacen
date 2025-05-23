@@ -9,6 +9,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.en
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetalleRolloRepository;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,6 +21,7 @@ import java.util.List;
 @Component
 @SuperBuilder
 @Slf4j
+@Qualifier("telaCruda")
 public class OrdenIngresoTelaCrudaPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
     protected final DetalleRolloRepository detalleRolloRepository;
 

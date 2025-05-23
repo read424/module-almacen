@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class OrdenIngresoAdapterFactoryImpl implements OrdenIngresoAdapterFactory {
+
     private final OrdenIngresoLogisticaPort ordenIngresoLogisticaAdapter;
 
     @Qualifier("telaCruda")

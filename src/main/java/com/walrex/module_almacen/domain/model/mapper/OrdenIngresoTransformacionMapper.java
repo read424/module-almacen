@@ -9,7 +9,6 @@ import com.walrex.module_almacen.domain.model.enums.Almacenes;
 import org.mapstruct.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,37 +16,35 @@ import java.util.List;
 public interface OrdenIngresoTransformacionMapper {
 
     @Mapping(source = "fec_ingreso", target = "fechaIngreso")
-    @Mapping(target = "almacen", qualifiedByName = "mapAlmacenDefecto")
-    @Mapping(target = "detalles", qualifiedByName = "mapDetallesTransformacion")
+    @Mapping(source = "almacen", target = "almacen")
+    @Mapping(source = ".", target = "detalles", qualifiedByName = "crearDetalleUnico")
     OrdenIngreso toOrdenIngreso(OrdenIngresoTransformacionDTO dto);
 
-    @Named("mapAlmacenDefecto")
-    default Almacen mapAlmacenDefecto(OrdenIngresoTransformacionDTO dto) {
-        // Si viene almacén en el DTO, usarlo. Si no, usar por defecto
-        if (dto.getAlmacen() != null && dto.getAlmacen().getIdAlmacen() != null) {
-            return dto.getAlmacen();
-        }
-        return Almacen.builder()
-                .idAlmacen(Almacenes.INSUMOS.getId())
-                .build(); // ✅ Valor por defecto
-    }
-
-    @Named("mapDetallesTransformacion")
-    default List<DetalleOrdenIngreso> mapDetallesTransformacion(OrdenIngresoTransformacionDTO dto){
+    @Named("crearDetalleUnico")
+    default List<DetalleOrdenIngreso> crearDetalleUnico(OrdenIngresoTransformacionDTO dto) {
         if (dto == null || dto.getArticulo() == null) {
             return Collections.emptyList();
         }
-        List<DetalleOrdenIngreso> detalles = new ArrayList<>();
-        DetalleOrdenIngreso item = DetalleOrdenIngreso.builder()
-            .articulo(Articulo.builder()
-                .id(dto.getArticulo().getIdArticulo())
-                .build()
-            )
-            .idUnidad(dto.getUnidad_ingreso().getValue())
-            .cantidad(BigDecimal.valueOf(dto.getCantidad()))
-            .costo(BigDecimal.valueOf(dto.getPrecio()))
-            .build();
-        detalles.add(item);
-        return detalles;
+
+        DetalleOrdenIngreso detalle = DetalleOrdenIngreso.builder()
+                .articulo(Articulo.builder()
+                        .id(dto.getArticulo().getIdArticulo())
+                        .build())
+                .idUnidad(dto.getUnidad_ingreso().getValue())
+                .cantidad(BigDecimal.valueOf(dto.getCantidad()))
+                .costo(BigDecimal.valueOf(dto.getPrecio()))
+                .build();
+
+        return List.of(detalle);
+    }
+
+    // Mapeo directo para almacén con valor por defecto
+    default Almacen mapAlmacen(Almacen almacen) {
+        if (almacen != null && almacen.getIdAlmacen() != null) {
+            return almacen;
+        }
+        return Almacen.builder()
+                .idAlmacen(Almacenes.INSUMOS.getId())
+                .build();
     }
 }

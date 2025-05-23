@@ -27,7 +27,7 @@ public interface ResultadoAjusteMapper {
      * Convierte un DetalleEgresoDTO a ItemResultSavedDTO
      */
     @Mapping(source = "id", target = "id_detalle_orden")
-    @Mapping(source = "idArticulo", target = "id_articulo")
+    @Mapping(source = "articulo.id", target = "id_articulo")
     @Mapping(source = "cantidad", target = "cantidad")
     @Mapping(source = "idUnidad", target = "id_unidad")
     ItemArticuloEgreso detalleSalidaToItemResult(DetalleEgresoDTO detalle);
