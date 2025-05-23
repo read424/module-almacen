@@ -254,11 +254,11 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
 ## 📞 Contacto
 
 Para preguntas o sugerencias sobre este módulo:
-- **Email**: developer@walrex.com
+- **Email**: read424@gmail.com
 - **Documentación**: [Wiki del Proyecto](link-to-wiki)
 - **Issues**: [GitHub Issues](link-to-issues)
 
 ---
 
 **Versión**: 1.0.0
-**Última actualización**: Enero 2025
+**Última actualización**: Mayo 2025
