@@ -1,6 +1,7 @@
 package com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.router;
 
 import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.OrdenIngresoLogisticaHandler;
+import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.TransformacionInsumosHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.web.reactive.function.server.*;
 @Slf4j
 public class RouterAlmacenReactiveAPI {
     private final OrdenIngresoLogisticaHandler ordenIngresoHandler;
+    private final TransformacionInsumosHandler transformacionInsumosHandler;
     private static final String PATH_ALMACEN="almacen";
 
     @Bean
@@ -20,6 +22,7 @@ public class RouterAlmacenReactiveAPI {
         return RouterFunctions.route()
             .path("/"+PATH_ALMACEN, builder -> builder
                 .POST("", RequestPredicates.accept(MediaType.APPLICATION_JSON), ordenIngresoHandler::nuevoIngresoLogistica)
+                .POST("/transformacion", RequestPredicates.accept(MediaType.APPLICATION_JSON), transformacionInsumosHandler::crearConversion)
             )
             .before(request -> {
                 log.info("🔄 Router {} recibió solicitud: {} {}", PATH_ALMACEN, request.method(), request.path());

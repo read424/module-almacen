@@ -1,6 +1,8 @@
 package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
 import com.walrex.module_almacen.application.ports.output.RegistrarEgresoPort;
+import com.walrex.module_almacen.domain.model.Almacen;
+import com.walrex.module_almacen.domain.model.Motivo;
 import com.walrex.module_almacen.domain.model.dto.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailSalidaEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailSalidaLoteEntity;
@@ -61,7 +63,7 @@ public class EgresoAdapter implements RegistrarEgresoPort {
 
                 return Flux.fromIterable(items)
                     .doOnNext(item -> log.debug("Procesando ítem: ArticuloId: {}, Cantidad: {}, UnidadId: {}. TransactionId: {}",
-                            item.getIdArticulo(), item.getCantidad(), item.getIdUnidad(), transactionId)
+                            item.getArticulo().getId(), item.getCantidad(), item.getIdUnidad(), transactionId)
                     )
                     .flatMap(item -> {
                         //Convertimos el DTO a entidad
@@ -74,13 +76,13 @@ public class EgresoAdapter implements RegistrarEgresoPort {
                                 .flatMap(detalleSalidaGuardado->{
                                    if(item.getA_lotes()!=null && !item.getA_lotes().isEmpty()){
                                        log.debug("El ítem con artículo {} tiene {} lotes para procesar. TransactionId: {}",
-                                               item.getIdArticulo(), item.getA_lotes().size(), transactionId);
+                                               item.getArticulo().getId(), item.getA_lotes().size(), transactionId);
 
                                        return procesarLotes(detalleSalidaGuardado, item.getA_lotes())
                                            .collectList()
                                            .doOnSuccess(lotes -> {
                                                log.debug("Procesados {} lotes para el artículo {} en detalle {}. TransactionId: {}",
-                                                       lotes.size(), item.getIdArticulo(), detalleSalidaGuardado.getId_detalle_orden(), transactionId);
+                                                       lotes.size(), item.getArticulo().getId(), detalleSalidaGuardado.getId_detalle_orden(), transactionId);
                                            })
                                            .map(lotesSalida->{
                                                DetalleEgresoDTO itemActualizado = detailSalidaMapper.toDto(detalleSalidaGuardado);
@@ -89,7 +91,7 @@ public class EgresoAdapter implements RegistrarEgresoPort {
                                            });
                                    }else{
                                        log.debug("El ítem con artículo {} no tiene lotes asociados. TransactionId: {}",
-                                               item.getIdArticulo(), transactionId);
+                                               item.getArticulo().getId(), transactionId);
                                        return Mono.just(detailSalidaMapper.toDto(detalleSalidaGuardado));
                                    }
                                 });
@@ -100,10 +102,16 @@ public class EgresoAdapter implements RegistrarEgresoPort {
                                 itemsActualizados.size(), idOrdenSalida, transactionId);
                         return OrdenEgresoDTO.builder()
                                 .id(idOrdenSalida.longValue())
-                                .idMotivo(idMotivo)
-                                .idAlmacen(idAlmacen)
+                                .motivo(Motivo.builder()
+                                        .idMotivo(idMotivo)
+                                        .build()
+                                )
+                                .almacenOrigen(Almacen.builder()
+                                        .idAlmacen(idAlmacen)
+                                        .build()
+                                )
                                 .observacion(observacion)
-                                .fechaEgreso(fecha)
+                                .fecRegistro(fecha)
                                 .detalles(itemsActualizados)
                                 .build();
                     }).doOnError(error -> {

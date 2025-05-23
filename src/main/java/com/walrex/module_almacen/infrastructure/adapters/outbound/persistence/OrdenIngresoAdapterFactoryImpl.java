@@ -16,6 +16,9 @@ public class OrdenIngresoAdapterFactoryImpl implements OrdenIngresoAdapterFactor
     @Qualifier("telaCruda")
     private final OrdenIngresoLogisticaPort ordenIngresoTelaCrudaAdapter;
 
+    @Qualifier("transformacion")
+    private final OrdenIngresoLogisticaPort ordenIngresoTransformacionAdapter;
+
     @Override
     public Mono<OrdenIngresoLogisticaPort> getAdapter(TipoOrdenIngreso tipoOrden) {
         if (tipoOrden == null) {
@@ -26,6 +29,8 @@ public class OrdenIngresoAdapterFactoryImpl implements OrdenIngresoAdapterFactor
         switch (tipoOrden) {
             case TELA_CRUDA:
                 return Mono.just(ordenIngresoTelaCrudaAdapter);
+            case TRANSFORMACION:
+                return Mono.just(ordenIngresoTransformacionAdapter);
             case LOGISTICA_GENERAL:
             default:
                 return Mono.just(ordenIngresoLogisticaAdapter);

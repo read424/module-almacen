@@ -15,4 +15,7 @@ public interface DetailSalidaRepository extends ReactiveCrudRepository<DetailSal
 
     @Query("DELETE FROM almacenes.detalle_ordensalida WHERE id_ordensalida=:idOrdenSalida")
     Mono<Integer> deleteDetailsSalidaByIdOrden(Integer idOrdenSalida);
+
+    @Query("UPDATE almacenes.detalle_ordensalida SET entregado=1 WHERE id_detalle_orden=:idDetalleOrden")
+    Mono<DetailSalidaEntity> assignedDelivered(Integer idDetalleOrden);
 }
