@@ -1,12 +1,12 @@
 package com.walrex.module_almacen.domain.model.enums;
 
-public enum Almacen {
+public enum TypeAlmacen {
     INSUMOS(1),
     TELA_CRUDA(2);
 
     private final int id;
 
-    Almacen(int id){
+    TypeAlmacen(int id){
         this.id=id;
     }
 
@@ -14,8 +14,8 @@ public enum Almacen {
         return id;
     }
 
-    public static Almacen fromId(int id) {
-        for (Almacen almacen : values()) {
+    public static TypeAlmacen fromId(int id) {
+        for (TypeAlmacen almacen : values()) {
             if (almacen.id == id) {
                 return almacen;
             }
