@@ -8,13 +8,12 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-@Builder
 @Table("almacenes.ordensalida")
 public class OrdenSalidaEntity {
     @Id
@@ -24,9 +23,9 @@ public class OrdenSalidaEntity {
     private Integer id_tipo_comprobante;
     private String num_comprobante;
     @Column("id_almacen_origen")
-    private Integer id_source_store;
+    private Integer id_store_source;
     @Column("id_almacen_destino")
-    private Integer id_target_store;
+    private Integer id_store_target;
     @Column("fec_registro")
     private OffsetDateTime create_at;
     private Integer id_usuario;

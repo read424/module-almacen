@@ -12,16 +12,14 @@ import java.util.List;
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface DetailSalidaMapper {
 
-    DetailSalidaMapper INSTANCE = Mappers.getMapper(DetailSalidaMapper.class);
-
     @Mapping(source = "id_ordensalida", target = "idOrdenEgreso")
     @Mapping(source = "id_detalle_orden", target = "id")
-    @Mapping(source = "precio", target = "valorSalida")
+    @Mapping(source = "tot_monto", target = "totalMonto")
     DetalleEgresoDTO toDto(DetailSalidaEntity entity);
 
     @Mapping(source = "idOrdenEgreso", target = "id_ordensalida")
     @Mapping(source = "id", target = "id_detalle_orden")
-    @Mapping(source = "valorSalida", target = "precio")
+    @Mapping(source = "totalMonto", target = "tot_monto")
     DetailSalidaEntity toEntity(DetalleEgresoDTO dto);
 
     List<DetailSalidaEntity> toEntityList(List<ItemProductDTO> dtos);

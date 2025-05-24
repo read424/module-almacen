@@ -5,7 +5,7 @@ import com.walrex.module_almacen.domain.model.Articulo;
 import com.walrex.module_almacen.domain.model.DetalleOrdenIngreso;
 import com.walrex.module_almacen.domain.model.OrdenIngreso;
 import com.walrex.module_almacen.domain.model.dto.OrdenIngresoTransformacionDTO;
-import com.walrex.module_almacen.domain.model.enums.Almacenes;
+import com.walrex.module_almacen.domain.model.enums.TypeAlmacen;
 import org.mapstruct.*;
 
 import java.math.BigDecimal;
@@ -44,7 +44,7 @@ public interface OrdenIngresoTransformacionMapper {
             return almacen;
         }
         return Almacen.builder()
-                .idAlmacen(Almacenes.INSUMOS.getId())
+                .idAlmacen(TypeAlmacen.INSUMOS.getId())
                 .build();
     }
 }
