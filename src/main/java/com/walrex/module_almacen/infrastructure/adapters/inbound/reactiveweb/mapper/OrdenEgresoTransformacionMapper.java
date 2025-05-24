@@ -12,6 +12,6 @@ import org.mapstruct.factory.Mappers;
 public interface OrdenEgresoTransformacionMapper {
     OrdenEgresoTransformacionMapper INSTANCE = Mappers.getMapper(OrdenEgresoTransformacionMapper.class);
 
-    @Mapping(source = "fecRegistro", target = "fecIngreso")
+    @Mapping(source = "fec_ingreso", target = "fecRegistro")
     OrdenEgresoDTO toOrdenEgreso(OrdenIngresoTransformacionDTO dto);
 }
