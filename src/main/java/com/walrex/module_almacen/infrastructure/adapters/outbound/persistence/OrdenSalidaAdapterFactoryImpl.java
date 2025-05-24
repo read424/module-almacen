@@ -6,6 +6,7 @@ import com.walrex.module_almacen.domain.model.enums.TipoOrdenSalida;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 public class OrdenSalidaAdapterFactoryImpl implements OrdenSalidaAdapterFactory {
+
     private final OrdenSalidaLogisticaPort ordenSalidaLogisticaAdapter;
 
     @Qualifier("transformacionSalida")

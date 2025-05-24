@@ -6,7 +6,7 @@ import com.walrex.module_almacen.domain.model.Almacen;
 import com.walrex.module_almacen.domain.model.Articulo;
 import com.walrex.module_almacen.domain.model.DetalleOrdenIngreso;
 import com.walrex.module_almacen.domain.model.OrdenIngreso;
-import com.walrex.module_almacen.domain.model.enums.Almacenes;
+import com.walrex.module_almacen.domain.model.enums.TypeAlmacen;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.ArticuloEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailsIngresoEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.OrdenIngresoEntity;
@@ -116,7 +116,7 @@ public class OrdenIngresoTransformacionPersistenceAdapterTest {
         ordenIngreso = OrdenIngreso.builder()
                 .fechaIngreso(LocalDate.of(2025, 5, 3))
                 .almacen(Almacen.builder()
-                        .idAlmacen(Almacenes.INSUMOS.getId()).build()
+                        .idAlmacen(TypeAlmacen.INSUMOS.getId()).build()
                 )
                 .detalles(List.of(
                     DetalleOrdenIngreso.builder()
