@@ -6,10 +6,7 @@ import com.walrex.module_almacen.domain.model.exceptions.StockInsuficienteExcept
 import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.domain.model.enums.TypeMovimiento;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailSalidaLoteEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetalleInventaryEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.InventoryEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.KardexEntity;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.DetailSalidaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenSalidaEntityMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.*;
@@ -30,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -473,6 +469,105 @@ public class OrdenSalidaTransformacionPersistenceAdapterTest {
                 .expectErrorMatches(throwable ->
                         throwable instanceof RuntimeException &&
                                 "Error en consulta de lote".equals(throwable.getMessage()))
+                .verify();
+    }
+
+    @Test
+    void deberiaAplicarConversionCuandoUnidadesSonDiferentes() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(1L)
+                .idUnidad(1) // Unidad original
+                .articulo(Articulo.builder()
+                        .id(100)
+                        .build())
+                .build();
+
+        ArticuloEntity infoConversion = ArticuloEntity.builder()
+                .idUnidadConsumo(6) // ✅ Unidad diferente
+                .isMultiplo("1")
+                .valorConv(3)
+                .stock(BigDecimal.valueOf(5000.0))
+                .build();
+
+        // When
+        Mono<DetalleEgresoDTO> resultado = adapter.aplicarConversion(detalle, infoConversion);
+
+        // Then
+        StepVerifier.create(resultado)
+                .assertNext(detalleActualizado -> {
+                    // ✅ Verificar que se aplicó la conversión
+                    assertEquals(Integer.valueOf(6), detalleActualizado.getArticulo().getIdUnidadSalida());
+                    assertEquals("1", detalleActualizado.getArticulo().getIs_multiplo());
+                    assertEquals(Integer.valueOf(3), detalleActualizado.getArticulo().getValor_conv());
+                    assertEquals(BigDecimal.valueOf(5000.0), detalleActualizado.getArticulo().getStock());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void noDeberiaAplicarConversionCuandoUnidadesSonIguales() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(1L)
+                .idUnidad(1) // Unidad original
+                .articulo(Articulo.builder()
+                        .id(100)
+                        .idUnidadSalida(1) // Inicialmente null
+                        .is_multiplo("0")
+                        .valor_conv(0)
+                        .stock(BigDecimal.valueOf(3000.0))
+                        .build())
+                .build();
+
+        ArticuloEntity infoConversion = ArticuloEntity.builder()
+                .idUnidadConsumo(1) // ✅ Misma unidad
+                .isMultiplo("0")
+                .valorConv(0)
+                .stock(BigDecimal.valueOf(3000.0))
+                .build();
+
+        // When
+        Mono<DetalleEgresoDTO> resultado = adapter.aplicarConversion(detalle, infoConversion);
+
+        // Then
+        StepVerifier.create(resultado)
+                .assertNext(detalleActualizado -> {
+                    // ✅ Solo se debe actualizar idUnidadSalida, lo demás se mantiene
+                    assertEquals(Integer.valueOf(1), detalleActualizado.getArticulo().getIdUnidadSalida());
+
+                    // ✅ Valores originales NO deben cambiar
+                    assertEquals("0", detalleActualizado.getArticulo().getIs_multiplo()); // Se mantiene original
+                    assertEquals(Integer.valueOf(0), detalleActualizado.getArticulo().getValor_conv()); // Se mantiene original
+                    assertEquals(BigDecimal.valueOf(3000.0), detalleActualizado.getArticulo().getStock()); // Se mantiene original
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void deberiaManejarIdUnidadNullEnDetalle() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(123L)
+                .idUnidad(null) // ✅ ID de unidad null
+                .articulo(Articulo.builder()
+                        .id(456)
+                        .build())
+                .build();
+
+        ArticuloEntity infoConversion = ArticuloEntity.builder()
+                .idUnidadConsumo(2)
+                .build();
+
+        // When
+        Mono<DetalleEgresoDTO> resultado = adapter.aplicarConversion(detalle, infoConversion);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                throwable.getMessage().contains("ID de unidad no puede ser null para el detalle 123") &&
+                                throwable.getMessage().contains("artículo 456"))
                 .verify();
     }
 

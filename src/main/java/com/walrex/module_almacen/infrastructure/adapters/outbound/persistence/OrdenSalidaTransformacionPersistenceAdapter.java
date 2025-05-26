@@ -143,6 +143,14 @@ public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaL
 
     // Método para aplicar conversión
     protected Mono<DetalleEgresoDTO> aplicarConversion(DetalleEgresoDTO detalle, ArticuloEntity infoConversion) {
+        // ✅ Validar que idUnidad no sea null
+        if (detalle.getIdUnidad() == null) {
+            String errorMsg = String.format("ID de unidad no puede ser null para el detalle %d del artículo %d",
+                    detalle.getId(),
+                    detalle.getArticulo().getId());
+            log.error("❌ {}", errorMsg);
+            return Mono.error(new IllegalArgumentException(errorMsg));
+        }
         if (!detalle.getIdUnidad().equals(infoConversion.getIdUnidadConsumo())) {
             detalle.getArticulo().setIdUnidadSalida(infoConversion.getIdUnidadConsumo());
             detalle.getArticulo().setIs_multiplo(infoConversion.getIsMultiplo());
