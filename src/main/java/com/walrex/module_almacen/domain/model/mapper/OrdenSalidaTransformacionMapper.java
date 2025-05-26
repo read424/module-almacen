@@ -16,7 +16,6 @@ public interface OrdenSalidaTransformacionMapper {
     @Mapping(source = "fec_ingreso", target = "fecRegistro")
     @Mapping(source = "fec_ingreso", target = "fecEntrega")
     @Mapping(source = ".", target = "motivo", qualifiedByName = "assignedMotivo" )
-    @Mapping(target = "isInterno", qualifiedByName = "assignedIsInterno")
     @Mapping(source = ".", target = "almacenOrigen", qualifiedByName = "assignedAlmacenOrigen")
     @Mapping(source = ".", target = "almacenDestino", qualifiedByName = "assignedAlmacenDestino")
     @Mapping(source = "detalles", target = "detalles") // ✅ Mapear detalles
