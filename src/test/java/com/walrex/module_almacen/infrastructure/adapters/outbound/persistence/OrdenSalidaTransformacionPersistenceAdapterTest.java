@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -568,6 +570,203 @@ public class OrdenSalidaTransformacionPersistenceAdapterTest {
                         throwable instanceof IllegalArgumentException &&
                                 throwable.getMessage().contains("ID de unidad no puede ser null para el detalle 123") &&
                                 throwable.getMessage().contains("artículo 456"))
+                .verify();
+    }
+
+    @Test
+    void deberiaBuscarInfoConversionExitosamente() {
+
+        ArticuloEntity infoConversion = ArticuloEntity.builder()
+                .idArticulo(617)
+                .idUnidadConsumo(6)
+                .isMultiplo("1")
+                .valorConv(3)
+                .stock(BigDecimal.valueOf(1000.0))
+                .build();
+
+        when(articuloRepository.getInfoConversionArticulo(1, 617))
+                .thenReturn(Mono.just(infoConversion));
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectNext(infoConversion)
+                .verifyComplete();
+
+        verify(articuloRepository).getInfoConversionArticulo(1, 617);
+    }
+
+    @Test
+    void deberiaManejarCuandoNoSeEncuentraInfoConversion() {
+
+        when(articuloRepository.getInfoConversionArticulo(1, 617))
+                .thenReturn(Mono.empty()); // ✅ No se encuentra
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof ResponseStatusException &&
+                                ((ResponseStatusException) throwable).getStatusCode() == HttpStatus.BAD_REQUEST &&
+                                throwable.getMessage().contains("No se encontró información de conversión para el artículo: 617"))
+                .verify();
+    }
+
+    @Test
+    void deberiaManejarDetalleNull() {
+        // Given
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder().build();
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(null, orden);
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                "El detalle no puede ser null".equals(throwable.getMessage()))
+                .verify();
+
+        verify(articuloRepository, never()).getInfoConversionArticulo(anyInt(), anyInt());
+    }
+
+    @Test
+    void deberiaManejarOrdenNull() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder().build();
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, null);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                "La orden de egreso no puede ser null".equals(throwable.getMessage()))
+                .verify();
+    }
+
+    @Test
+    void deberiaManejarAlmacenOrigenNull() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .articulo(Articulo.builder().id(456).build())
+                .build();
+
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder()
+                .id(789L)
+                .almacenOrigen(null) // ✅ Almacén null
+                .build();
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, orden);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                throwable.getMessage().contains("Almacén origen no puede ser null para la orden 789"))
+                .verify();
+    }
+
+    @Test
+    void deberiaManejarIdAlmacenNull() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .articulo(Articulo.builder().id(456).build())
+                .build();
+
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder()
+                .id(789L)
+                .almacenOrigen(Almacen.builder()
+                        .idAlmacen(null) // ✅ ID almacén null
+                        .build())
+                .build();
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, orden);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                throwable.getMessage().contains("ID de almacén origen no puede ser null para la orden 789"))
+                .verify();
+    }
+
+    @Test
+    void deberiaManejarArticuloNull() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(123L)
+                .articulo(null) // ✅ Artículo null
+                .build();
+
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder()
+                .almacenOrigen(Almacen.builder().idAlmacen(1).build())
+                .build();
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, orden);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                throwable.getMessage().contains("Artículo no puede ser null para el detalle 123"))
+                .verify();
+    }
+
+    @Test
+    void deberiaManejarIdArticuloNull() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(123L)
+                .articulo(Articulo.builder()
+                        .id(null) // ✅ ID artículo null
+                        .build())
+                .build();
+
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder()
+                .almacenOrigen(Almacen.builder().idAlmacen(1).build())
+                .build();
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, orden);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof IllegalArgumentException &&
+                                throwable.getMessage().contains("ID de artículo no puede ser null para el detalle 123"))
+                .verify();
+    }
+
+
+    @Test
+    void deberiaManejarErrorEnRepositorio() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .articulo(Articulo.builder().id(456).build())
+                .build();
+
+        OrdenEgresoDTO orden = OrdenEgresoDTO.builder()
+                .almacenOrigen(Almacen.builder().idAlmacen(1).build())
+                .build();
+
+        when(articuloRepository.getInfoConversionArticulo(1, 456))
+                .thenReturn(Mono.error(new RuntimeException("Error de base de datos")));
+
+        // When
+        Mono<ArticuloEntity> resultado = adapter.buscarInfoConversion(detalle, orden);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof RuntimeException &&
+                                "Error de base de datos".equals(throwable.getMessage()))
                 .verify();
     }
 

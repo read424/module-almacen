@@ -128,9 +128,47 @@ public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaL
 
     // Método para buscar información de conversión por articulo
     protected Mono<ArticuloEntity> buscarInfoConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenEgreso) {
+        // ✅ Validar que detalle no sea null
+        if (detalle == null) {
+            return Mono.error(new IllegalArgumentException("El detalle no puede ser null"));
+        }
+
+        // ✅ Validar que ordenEgreso no sea null
+        if (ordenEgreso == null) {
+            return Mono.error(new IllegalArgumentException("La orden de egreso no puede ser null"));
+        }
+
+        // ✅ Validar que almacenOrigen no sea null
+        if (ordenEgreso.getAlmacenOrigen() == null) {
+            return Mono.error(new IllegalArgumentException(
+                    String.format("Almacén origen no puede ser null para la orden %d", ordenEgreso.getId())));
+        }
+
+        // ✅ Validar que idAlmacen no sea null
+        if (ordenEgreso.getAlmacenOrigen().getIdAlmacen() == null) {
+            return Mono.error(new IllegalArgumentException(
+                    String.format("ID de almacén origen no puede ser null para la orden %d", ordenEgreso.getId())));
+        }
+
+        // ✅ Validar que artículo no sea null
+        if (detalle.getArticulo() == null) {
+            return Mono.error(new IllegalArgumentException(
+                    String.format("Artículo no puede ser null para el detalle %d", detalle.getId())));
+        }
+
+        // ✅ Validar que ID de artículo no sea null
+        if (detalle.getArticulo().getId() == null) {
+            return Mono.error(new IllegalArgumentException(
+                    String.format("ID de artículo no puede ser null para el detalle %d", detalle.getId())));
+        }
+
+        Integer idAlmacen = ordenEgreso.getAlmacenOrigen().getIdAlmacen();
+        Integer idArticulo = detalle.getArticulo().getId();
+
+        log.debug("🔍 Buscando información de conversión para artículo {} en almacén {}", idArticulo, idAlmacen);
         return articuloRepository.getInfoConversionArticulo(
-                        ordenEgreso.getAlmacenOrigen().getIdAlmacen(),
-                        detalle.getArticulo().getId()
+                        idAlmacen,
+                        idArticulo
                 )
                 .doOnNext(info -> log.info("✅ Información de conversión encontrada: {}", info))
                 .switchIfEmpty(Mono.error(new ResponseStatusException(
