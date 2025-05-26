@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -768,6 +770,65 @@ public class OrdenSalidaTransformacionPersistenceAdapterTest {
                         throwable instanceof RuntimeException &&
                                 "Error de base de datos".equals(throwable.getMessage()))
                 .verify();
+    }
+
+    @Test
+    void deberiaProcessarEntregaYConversionExitosamente() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(123L)
+                .idUnidad(1)
+                .articulo(Articulo.builder()
+                        .id(456)
+                        .stock(BigDecimal.valueOf(2000.0))
+                        .build())
+                .build();
+
+        OrdenEgresoDTO ordenSalida = OrdenEgresoDTO.builder()
+                .id(789L)
+                .almacenOrigen(Almacen.builder()
+                        .idAlmacen(1)
+                        .build())
+                .build();
+
+        // Mock de assignedDelivered
+        DetailSalidaEntity detalleActualizado = new DetailSalidaEntity();
+        when(detalleSalidaRepository.assignedDelivered(123))
+                .thenReturn(Mono.just(detalleActualizado));
+
+        // Mock de buscarInfoConversion
+        ArticuloEntity infoConversion = ArticuloEntity.builder()
+                .idUnidadConsumo(6) // Unidad diferente para aplicar conversión
+                .isMultiplo("1")
+                .valorConv(3)
+                .stock(BigDecimal.valueOf(5000.0))
+                .build();
+
+        when(articuloRepository.getInfoConversionArticulo(1, 456))
+                .thenReturn(Mono.just(infoConversion));
+
+        // When
+        Mono<DetalleEgresoDTO> resultado = adapter.procesarEntregaYConversion(detalle, ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .assertNext(detalleResultado -> {
+                    // ✅ Verificar que se aplicó la conversión
+                    assertEquals(Integer.valueOf(6), detalleResultado.getArticulo().getIdUnidadSalida());
+                    assertEquals("1", detalleResultado.getArticulo().getIs_multiplo());
+                    assertEquals(Integer.valueOf(3), detalleResultado.getArticulo().getValor_conv());
+                    assertEquals(BigDecimal.valueOf(5000.0), detalleResultado.getArticulo().getStock());
+
+                    // ✅ Verificar que es la misma instancia (modificada)
+                    assertSame(detalle, detalleResultado);
+                })
+                .verifyComplete();
+
+        // ✅ Verificar que se ejecutaron los métodos en orden correcto
+        InOrder inOrder = inOrder(detalleSalidaRepository, articuloRepository);
+        inOrder.verify(detalleSalidaRepository).assignedDelivered(123);
+        inOrder.verify(articuloRepository).getInfoConversionArticulo(1, 456);
+
     }
 
     private void setupTestData() {

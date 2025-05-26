@@ -114,7 +114,7 @@ public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaL
     }
 
     // ✅ Método auxiliar para procesar cada detalle
-    private Mono<DetalleEgresoDTO> procesarEntregaYConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
+    protected Mono<DetalleEgresoDTO> procesarEntregaYConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
         return detalleSalidaRepository.assignedDelivered(detalle.getId().intValue())
                 .doOnSuccess(updated ->
                         log.debug("Detalle {} marcado como entregado, trigger de lotes ejecutado", detalle.getId()))
