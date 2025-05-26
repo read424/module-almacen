@@ -26,9 +26,11 @@ import reactor.test.StepVerifier;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -331,6 +333,146 @@ public class OrdenSalidaTransformacionPersistenceAdapterTest {
                 .expectErrorMatches(throwable ->
                         throwable instanceof IllegalArgumentException &&
                                 throwable.getMessage().contains("Valor de conversión no configurado para artículo 617"))
+                .verify();
+    }
+
+    @Test
+    void deberiaRegistrarKardexConLotesExitosamente() {
+        // Given
+        // Configurar múltiples detalles en la orden
+        DetalleEgresoDTO detalle1 = DetalleEgresoDTO.builder()
+                .id(1L)
+                .articulo(Articulo.builder()
+                        .id(100)
+                        .idUnidadSalida(1)
+                        .valor_conv(0)
+                        .stock(BigDecimal.valueOf(5000.0))
+                        .build())
+                .idUnidad(1)
+                .cantidad(10.0)
+                .build();
+
+        DetalleEgresoDTO detalle2 = DetalleEgresoDTO.builder()
+                .id(2L)
+                .articulo(Articulo.builder()
+                        .id(200)
+                        .idUnidadSalida(1)
+                        .valor_conv(0)
+                        .stock(BigDecimal.valueOf(3000.0))
+                        .build())
+                .idUnidad(1)
+                .cantidad(20.0)
+                .build();
+
+        ordenSalida.setDetalles(List.of(detalle1, detalle2));
+
+        // Mock para el primer detalle
+        when(detalleSalidaLoteRepository.findByIdDetalleOrden(1L))
+                .thenReturn(Flux.just(
+                        DetailSalidaLoteEntity.builder()
+                                .id_lote(100)
+                                .cantidad(10.0)
+                                .monto_consumo(1.00)
+                                .total_monto(10.00)
+                                .build()
+                ));
+
+        // Mock para el segundo detalle
+        when(detalleSalidaLoteRepository.findByIdDetalleOrden(2L))
+                .thenReturn(Flux.just(
+                        DetailSalidaLoteEntity.builder()
+                                .id_lote(200)
+                                .cantidad(20.0)
+                                .monto_consumo(2.00)
+                                .total_monto(40.00)
+                                .build()
+                ));
+
+        // Mock para inventarios
+        when(detalleInventoryRespository.getStockLote(100))
+                .thenReturn(Mono.just(DetalleInventaryEntity.builder()
+                        .cantidadDisponible(50.0)
+                        .build()));
+
+        when(detalleInventoryRespository.getStockLote(200))
+                .thenReturn(Mono.just(DetalleInventaryEntity.builder()
+                        .cantidadDisponible(80.0)
+                        .build()));
+
+        when(kardexRepository.save(any(KardexEntity.class)))
+                .thenReturn(Mono.just(new KardexEntity()));
+
+        // When
+        Mono<OrdenEgresoDTO> resultado = adapter.registrarKardexConLotes(ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectNext(ordenSalida) // ✅ Debe retornar la misma orden
+                .verifyComplete();
+
+        // Verificar que se procesaron ambos detalles
+        verify(detalleSalidaLoteRepository).findByIdDetalleOrden(1L);
+        verify(detalleSalidaLoteRepository).findByIdDetalleOrden(2L);
+
+        // Verificar que se guardaron kardex para ambos detalles
+        verify(kardexRepository, times(2)).save(any(KardexEntity.class));
+    }
+
+    @Test
+    void deberiaRegistrarKardexConLotesSinDetalles() {
+        // Given
+        ordenSalida.setDetalles(Collections.emptyList()); // ✅ Sin detalles
+
+        // When
+        Mono<OrdenEgresoDTO> resultado = adapter.registrarKardexConLotes(ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectNext(ordenSalida) // ✅ Debe retornar la orden sin procesar nada
+                .verifyComplete();
+
+        // Verificar que NO se procesó nada
+        verify(detalleSalidaLoteRepository, never()).findByIdDetalleOrden(anyLong());
+        verify(kardexRepository, never()).save(any(KardexEntity.class));
+    }
+
+    @Test
+    void deberiaManejarErrorEnBusquedaDeLotes() {
+        // Given
+        DetalleEgresoDTO detalle = DetalleEgresoDTO.builder()
+                .id(1L)
+                .articulo(Articulo.builder()
+                        .id(100)
+                        .idUnidadSalida(1)
+                        .valor_conv(0)
+                        .stock(BigDecimal.valueOf(5000.0)) // ✅ Stock válido
+                        .build())
+                .idUnidad(1)
+                .cantidad(10.0)
+                .build();
+
+        ordenSalida.setDetalles(List.of(detalle));
+
+        // ✅ Mock que cause error en getStockLote
+        when(detalleSalidaLoteRepository.findByIdDetalleOrden(1L))
+                .thenReturn(Flux.just(
+                        DetailSalidaLoteEntity.builder()
+                                .id_lote(100) // ✅ ID válido
+                                .cantidad(10.0)
+                                .build()
+                ));
+
+        when(detalleInventoryRespository.getStockLote(100))
+                .thenReturn(Mono.error(new RuntimeException("Error en consulta de lote")));
+
+        // When
+        Mono<OrdenEgresoDTO> resultado = adapter.registrarKardexConLotes(ordenSalida);
+
+        // Then
+        StepVerifier.create(resultado)
+                .expectErrorMatches(throwable ->
+                        throwable instanceof RuntimeException &&
+                                "Error en consulta de lote".equals(throwable.getMessage()))
                 .verify();
     }
 

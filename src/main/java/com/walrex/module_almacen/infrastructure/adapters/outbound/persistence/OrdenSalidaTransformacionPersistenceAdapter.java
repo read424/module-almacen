@@ -155,7 +155,7 @@ public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaL
     }
 
     // ✅ Registrar kardex usando datos de detalle_salida_lote
-    private Mono<OrdenEgresoDTO> registrarKardexConLotes(OrdenEgresoDTO ordenSalida) {
+    protected Mono<OrdenEgresoDTO> registrarKardexConLotes(OrdenEgresoDTO ordenSalida) {
         log.debug("Registrando kardex con información de lotes");
 
         return Flux.fromIterable(ordenSalida.getDetalles())
