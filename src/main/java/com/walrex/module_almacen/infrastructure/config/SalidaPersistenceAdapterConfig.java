@@ -36,9 +36,9 @@ public class SalidaPersistenceAdapterConfig {
     public OrdenSalidaLogisticaPort ordenSalidaTransformacionPort(
             OrdenSalidaRepository ordenSalidaRepository,
             DetailSalidaRepository detalleSalidaRepository,
+            ArticuloRepository articuloRepository,
             DetailSalidaLoteRepository detalleSalidaLoteRepository,
             DetalleInventoryRespository detalleInventoryRespository,
-            InventoryRepository inventoryRepository,
             OrdenSalidaEntityMapper ordenSalidaEntityMapper,
             DetailSalidaMapper detailSalidaMapper,
             KardexRepository kardexRepository) {
@@ -46,9 +46,9 @@ public class SalidaPersistenceAdapterConfig {
         return new OrdenSalidaTransformacionPersistenceAdapter(
                 ordenSalidaRepository,
                 detalleSalidaRepository,
+                articuloRepository,
                 detalleSalidaLoteRepository,
                 detalleInventoryRespository,
-                inventoryRepository,
                 ordenSalidaEntityMapper,
                 detailSalidaMapper,
                 kardexRepository
