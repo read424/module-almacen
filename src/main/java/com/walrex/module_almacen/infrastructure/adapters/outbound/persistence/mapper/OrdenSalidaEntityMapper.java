@@ -2,10 +2,7 @@ package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.m
 
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.OrdenSalidaEntity;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,7 +19,7 @@ public interface OrdenSalidaEntityMapper {
     @Mapping(source = "numComprobante", target = "num_comprobante")
     @Mapping(source = "almacenOrigen.idAlmacen", target = "id_store_source")
     @Mapping(source = "almacenDestino.idAlmacen", target = "id_store_target")
-    @Mapping(source = "fecRegistro", target = "create_at")
+    @Mapping(source = "fecRegistro", target = "create_at", qualifiedByName = "mapLocalDateToOffsetDateTime")
     OrdenSalidaEntity toEntity(OrdenEgresoDTO dto);
 
     @Mapping(source = "id_ordensalida", target = "id")
@@ -32,7 +29,7 @@ public interface OrdenSalidaEntityMapper {
     @Mapping(source = "num_comprobante", target = "numComprobante")
     @Mapping(source = "id_store_source", target = "almacenOrigen.idAlmacen")
     @Mapping(source = "id_store_target", target = "almacenDestino.idAlmacen")
-    @Mapping(source = "create_at", target = "fecRegistro")
+    @Mapping(source = "create_at", target = "fecRegistro", qualifiedByName = "mapOffsetDateTimeToLocalDate")
     @Mapping(source = "id_usuario", target = "idUsuario")
     @Mapping(source = "fec_entrega", target = "fecEntrega")
     @Mapping(source = "id_user_entrega", target = "idUsuarioEntrega")
@@ -44,6 +41,7 @@ public interface OrdenSalidaEntityMapper {
     @Mapping(source = "correlativo_motivo", target = "correlativoMotivo")
     OrdenEgresoDTO toDomain(OrdenSalidaEntity entity);
 
+    @Named("mapLocalDateToOffsetDateTime")
     default OffsetDateTime mapLocalDateToOffsetDateTime(LocalDate date) {
         if (date == null) {
             return null;
@@ -52,5 +50,10 @@ public interface OrdenSalidaEntityMapper {
         LocalDateTime localDateTime = date.atStartOfDay();
         // Convierte el LocalDateTime a OffsetDateTime usando ZoneOffset.UTC
         return localDateTime.atOffset(ZoneOffset.UTC);
+    }
+
+    @Named("mapOffsetDateTimeToLocalDate")
+    default LocalDate mapOffsetDateTimeToLocalDate(OffsetDateTime offsetDateTime){
+        return offsetDateTime != null ? offsetDateTime.toLocalDate() : null;
     }
 }
