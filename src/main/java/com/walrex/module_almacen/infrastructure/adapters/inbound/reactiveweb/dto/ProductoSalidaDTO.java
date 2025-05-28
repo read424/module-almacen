@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProductoSalidaDTO {
     private Integer id_detalle_orden;
-    @NotNull(message = "")
+    @NotNull(message = "campo obligatorio")
     private Integer id_articulo;
     private String desc_articulo;
     private String abrev_unidad;

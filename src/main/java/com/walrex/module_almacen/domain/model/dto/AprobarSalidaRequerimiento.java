@@ -1,5 +1,6 @@
 package com.walrex.module_almacen.domain.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,16 +13,26 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AprobarSalidaRequerimientoDTO {
+public class AprobarSalidaRequerimiento {
+    @JsonProperty("id_ordensalida")
     private Integer idOrdenSalida;
+    @JsonProperty("cod_salida")
     private String codOrdenSalida;
+    @JsonProperty("id_requerimiento")
     private Integer idRequerimiento;
+    @JsonProperty("id_tipo_requerimiento")
     private Integer idTipoComprobante;
+    @JsonProperty("id_almacen_origen")
     private Integer idAlmacenOrigen;
+    @JsonProperty("id_almacen_destino")
     private Integer idAlmacenDestino;
+    @JsonProperty("id_usuario_entrega")
     private Integer idUsuarioEntrega;
     private String entregado;
+    @JsonProperty("id_personal_supervisor")
     private Integer idUsuarioSupervisor;
+    @JsonProperty("fec_entrega")
     private Date fecEntrega;
-    private List<ArticuloRequerimientoDTO> detalles;
+    @JsonProperty("productos")
+    private List<ArticuloRequerimiento> detalles;
 }
