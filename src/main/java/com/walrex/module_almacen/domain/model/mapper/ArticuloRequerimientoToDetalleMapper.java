@@ -1,0 +1,21 @@
+package com.walrex.module_almacen.domain.model.mapper;
+
+import com.walrex.module_almacen.domain.model.dto.ArticuloRequerimiento;
+import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
+import org.mapstruct.*;
+
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface ArticuloRequerimientoToDetalleMapper {
+    @Mapping(target = "id", source = "idDetalleOrden", qualifiedByName = "integerToLong")
+    @Mapping(target = "articulo.id", source = "idArticulo")
+    @Mapping(target = "articulo.nombre", source = "descArticulo")
+    @Mapping(target = "idUnidad", source = "idUnidad")
+    @Mapping(target = "cantidad", source = "cantidad")
+    @Mapping(target = "a_lotes", ignore = true)
+    DetalleEgresoDTO toDetalleEgreso(ArticuloRequerimiento articulo);
+
+    @Named("integerToLong")
+    default Long integerToLong(Integer value) {
+        return value != null ? value.longValue() : null;
+    }
+}
