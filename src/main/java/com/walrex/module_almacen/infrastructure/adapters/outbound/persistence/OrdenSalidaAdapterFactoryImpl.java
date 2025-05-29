@@ -19,6 +19,9 @@ public class OrdenSalidaAdapterFactoryImpl implements OrdenSalidaAdapterFactory 
     @Qualifier("transformacionSalida")
     private final OrdenSalidaLogisticaPort ordenSalidaTransformacionAdapter;
 
+    @Qualifier("aprobacionSalida")
+    private final OrdenSalidaLogisticaPort ordenSalidaAprobacionAdapter;
+
     @Override
     public Mono<OrdenSalidaLogisticaPort> getAdapter(TipoOrdenSalida tipoOrden) {
         log.debug("Obteniendo adaptador para tipo de orden de salida: {}", tipoOrden);
@@ -31,6 +34,9 @@ public class OrdenSalidaAdapterFactoryImpl implements OrdenSalidaAdapterFactory 
             case TRANSFORMACION:
                 log.debug("Usando adaptador de transformación para salida");
                 return Mono.just(ordenSalidaTransformacionAdapter);
+            case APPROVE_DELIVERY:
+                log.debug("Usando adaptador aprobacion de salida");
+                return Mono.just(ordenSalidaAprobacionAdapter);
             default:
                 return Mono.just(ordenSalidaLogisticaAdapter);
         }
