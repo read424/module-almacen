@@ -4,5 +4,6 @@ public enum TipoOrdenSalida {
     LOGISTICA_GENERAL,
     PROCESO_TELA,
     TRANSFORMACION,
+    APPROVE_DELIVERY,
     OTRO_TIPO
 }
