@@ -1,15 +1,18 @@
 package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
 import com.walrex.module_almacen.application.ports.output.OrdenSalidaLogisticaPort;
+import com.walrex.module_almacen.domain.model.Almacen;
 import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.domain.model.enums.TypeMovimiento;
 import com.walrex.module_almacen.domain.model.exceptions.StockInsuficienteException;
+import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.AlmacenDto;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.DetailSalidaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenSalidaEntityMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -26,17 +29,39 @@ import java.util.stream.Collectors;
 
 @Component
 @Qualifier("aprobacionSalida")
-@RequiredArgsConstructor
 @Slf4j
-public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogisticaPort {
+public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapter implements OrdenSalidaLogisticaPort {
+
     private final OrdenSalidaRepository ordenSalidaRepository;
     private final DetailSalidaRepository detalleSalidaRepository;
-    private final ArticuloRepository articuloRepository;
     private final DetailSalidaLoteRepository detalleSalidaLoteRepository;
     private final DetalleInventoryRespository detalleInventoryRespository;
     private final OrdenSalidaEntityMapper ordenSalidaEntityMapper;
     private final DetailSalidaMapper detailSalidaMapper;
     private final KardexRepository kardexRepository;
+
+    // ✅ Constructor explícito (alternativa a @SuperBuilder)
+    public OrdenSalidaAprobacionPersistenceAdapter(
+            ArticuloRepository articuloRepository,                    // Para super()
+            OrdenSalidaRepository ordenSalidaRepository,             // Para this
+            DetailSalidaRepository detalleSalidaRepository,
+            DetailSalidaLoteRepository detalleSalidaLoteRepository,
+            DetalleInventoryRespository detalleInventoryRespository,
+            OrdenSalidaEntityMapper ordenSalidaEntityMapper,
+            DetailSalidaMapper detailSalidaMapper,
+            KardexRepository kardexRepository) {
+
+        super(articuloRepository);  // ✅ Llamada a BaseInventarioAdapter
+
+        // ✅ Asignar campos propios
+        this.ordenSalidaRepository = ordenSalidaRepository;
+        this.detalleSalidaRepository = detalleSalidaRepository;
+        this.detalleSalidaLoteRepository = detalleSalidaLoteRepository;
+        this.detalleInventoryRespository = detalleInventoryRespository;
+        this.ordenSalidaEntityMapper = ordenSalidaEntityMapper;
+        this.detailSalidaMapper = detailSalidaMapper;
+        this.kardexRepository = kardexRepository;
+    }
 
     @Override
     public Mono<OrdenEgresoDTO> guardarOrdenSalida(OrdenEgresoDTO ordenSalida) {
@@ -59,6 +84,19 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
     public Mono<OrdenEgresoDTO> procesarSalidaPorLotes(OrdenEgresoDTO ordenSalida) {
         throw new UnsupportedOperationException("Método no implementado para aprobación");
     }
+
+    @Override
+    public Mono<OrdenEgresoDTO> consultarYValidarOrdenParaAprobacion(Integer idOrdenSalida) {
+        return consultarYValidarOrdenSalida(idOrdenSalida)
+                .map(ordenEntity -> OrdenEgresoDTO.builder()
+                        .id(ordenEntity.getId_ordensalida())
+                        .codEgreso(ordenEntity.getCod_salida())
+                        .almacenOrigen(Almacen.builder()
+                                .idAlmacen(ordenEntity.getId_store_source())
+                                .build())
+                        .build())
+                .doOnSuccess(orden ->
+                        log.info("✅ Orden {} preparada para aprobación", orden.getId()));    }
 
     /**
      * Método principal para procesar aprobación de un detalle específico
@@ -83,7 +121,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
     /**
      * Consulta y valida que la orden de salida exista y no esté entregada
      */
-    private Mono<OrdenSalidaEntity> consultarYValidarOrdenSalida(Integer idOrdenSalida) {
+    protected Mono<OrdenSalidaEntity> consultarYValidarOrdenSalida(Integer idOrdenSalida) {
         log.debug("Consultando orden de salida: {}", idOrdenSalida);
 
         return ordenSalidaRepository.findById(idOrdenSalida.longValue())
@@ -186,10 +224,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
                         log.debug("✅ Detalle {} marcado como entregado", detalle.getId()))
                 .then();
     }
-
-    /**
-     * Procesa entrega y conversión (adaptado de OrdenSalidaTransformacionPersistenceAdapter)
-     */
+    /*
     private Mono<DetalleEgresoDTO> procesarEntregaYConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
         return buscarInfoConversion(detalle, ordenSalida)
                 .flatMap(infoConversion -> aplicarConversion(detalle, infoConversion))
@@ -199,9 +234,6 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
                                 detalleActualizado.getArticulo().getStock()));
     }
 
-    /**
-     * Busca información de conversión por artículo
-     */
     private Mono<ArticuloEntity> buscarInfoConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenEgreso) {
         // ✅ Validaciones
         if (detalle == null) {
@@ -232,9 +264,6 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
                 )));
     }
 
-    /**
-     * Aplica conversión de unidades
-     */
     private Mono<DetalleEgresoDTO> aplicarConversion(DetalleEgresoDTO detalle, ArticuloEntity infoConversion) {
         if (detalle.getIdUnidad() == null) {
             String errorMsg = String.format("ID de unidad no puede ser null para el detalle %d del artículo %d",
@@ -254,7 +283,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter implements OrdenSalidaLogis
 
         return Mono.just(detalle);
     }
-
+    */
     /**
      * Registra kardex por detalle
      */

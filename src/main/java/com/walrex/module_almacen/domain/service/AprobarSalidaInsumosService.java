@@ -3,21 +3,18 @@ package com.walrex.module_almacen.domain.service;
 import com.walrex.module_almacen.application.ports.input.AprobarSalidaInsumosUseCase;
 import com.walrex.module_almacen.application.ports.input.OrdenSalidaAdapterFactory;
 import com.walrex.module_almacen.application.ports.output.OrdenSalidaLogisticaPort;
-import com.walrex.module_almacen.domain.model.dto.AprobarSalidaRequerimiento;
-import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
+import com.walrex.module_almacen.domain.model.dto.*;
 import com.walrex.module_almacen.domain.model.enums.TipoOrdenSalida;
-import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.AprobarSalidaRequestDTO;
-import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.AprobarSalidaResponseDTO;
-import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.ProductoSalidaDTO;
+import com.walrex.module_almacen.domain.model.mapper.ArticuloRequerimientoToDetalleMapper;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenSalidaAprobacionPersistenceAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,157 +23,126 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AprobarSalidaInsumosService implements AprobarSalidaInsumosUseCase {
     private final OrdenSalidaAdapterFactory salidaAdapterFactory;
+    private final ArticuloRequerimientoToDetalleMapper articuloRequerimientoMapper;
 
     @Override
     @Transactional
-    public Mono<AprobarSalidaRequerimiento> aprobarSalidaInsumos(AprobarSalidaRequerimiento request) {
-        log.info("Iniciando aprobación de salida de insumos para orden: {}",
-                request.getIdOrdenSalida());
-        return null;
+    public Mono<ResponseAprobacionRequerimientoDTO> aprobarSalidaInsumos(AprobarSalidaRequerimiento dto) {
+        log.info("Iniciando aprobación de salida de insumos para orden: {}", dto.getIdOrdenSalida());
+
         // ✅ Filtrar productos seleccionados
-        //List<ProductoSalidaDTO> productosSeleccionados = filtrarProductosSeleccionados(request.getProductos());
-        //List<ProductoSalidaDTO> productosOmitidos = filtrarProductosOmitidos(request.getProductos());
+        List<ArticuloRequerimiento> productosSeleccionados = filtrarProductosSeleccionados(dto.getDetalles());
 
-        //log.info("Productos a aprobar: {}, Productos omitidos: {}",
-        //        productosSeleccionados.size(), productosOmitidos.size());
+        log.info("Productos a aprobar: {}", productosSeleccionados.size());
 
-        //if (productosSeleccionados.isEmpty()) {
-        //    return Mono.just(crearRespuestaSinAprobaciones(request, productosOmitidos));
-        //}
-        /*
-        return salidaAdapterFactory.getAdapter(TipoOrdenSalida.TRANSFORMACION)
-                .flatMap(adapter -> procesarAprobacion(adapter, request, productosSeleccionados, productosOmitidos))
+        return salidaAdapterFactory.getAdapter(TipoOrdenSalida.APPROVE_DELIVERY)
+                .flatMap(adapter -> procesarAprobacion(dto, productosSeleccionados, adapter))
                 .doOnSuccess(response ->
                         log.info("✅ Aprobación completada para orden: {} - Productos aprobados: {}",
-                                request.getId_ordensalida(), response.getProductosAprobados()))
+                                dto.getIdOrdenSalida(), response.getProductosAprobados()))
                 .doOnError(error ->
                         log.error("❌ Error en aprobación de salida para orden: {} - Error: {}",
-                                request.getId_ordensalida(), error.getMessage(), error));
-         */
+                                dto.getIdOrdenSalida(), error.getMessage(), error));
     }
-    /*
-    private List<ProductoSalidaDTO> filtrarProductosSeleccionados(List<ProductoSalidaDTO> productos) {
+
+    private List<ArticuloRequerimiento> filtrarProductosSeleccionados(List<ArticuloRequerimiento> productos) {
         if (productos == null) {
-            return Collections.emptyList();
+            throw new IllegalArgumentException("La lista de productos no puede ser null");
         }
 
-        return productos.stream()
+        List<ArticuloRequerimiento> productosSeleccionados = productos.stream()
                 .filter(producto -> Boolean.TRUE.equals(producto.getSelected()))
                 .collect(Collectors.toList());
-    }
 
-    private List<ProductoSalidaDTO> filtrarProductosOmitidos(List<ProductoSalidaDTO> productos) {
-        if (productos == null) {
-            return Collections.emptyList();
+        if (productosSeleccionados.isEmpty()) {
+            throw new IllegalArgumentException("No se encontraron productos seleccionados en la lista");
         }
 
-        return productos.stream()
-                .filter(producto -> !Boolean.TRUE.equals(producto.getSelected()))
-                .collect(Collectors.toList());
+        return productosSeleccionados;
     }
-    private Mono<AprobarSalidaResponseDTO> procesarAprobacion(
-            OrdenSalidaLogisticaPort adapter,
-            AprobarSalidaRequestDTO request,
-            List<ProductoSalidaDTO> productosSeleccionados,
-            List<ProductoSalidaDTO> productosOmitidos) {
 
-        Integer idOrden = Integer.valueOf(request.getId_ordensalida());
+    private Mono<ResponseAprobacionRequerimientoDTO> procesarAprobacion(
+            AprobarSalidaRequerimiento request,
+            List<ArticuloRequerimiento> productosSeleccionados,
+            OrdenSalidaLogisticaPort adapter) {
 
-        // ✅ Ejecutar actualizarEstadoEntrega para la orden
-        return adapter.actualizarEstadoEntrega(idOrden, true)
-                .map(ordenActualizada -> construirRespuestaExitosa(
-                        request,
-                        productosSeleccionados,
-                        productosOmitidos,
-                        ordenActualizada))
+        Integer idOrden = request.getIdOrdenSalida();
+
+        return adapter.consultarYValidarOrdenParaAprobacion(idOrden)
+                .flatMap(ordenEgreso->{
+                    log.info("✅ Orden {} validada, procesando {} productos",
+                            idOrden, productosSeleccionados.size());
+                    return Flux.fromIterable(productosSeleccionados)
+                            .flatMap(articulo -> procesarDetalleAprobacion(articulo, ordenEgreso, adapter))
+                            .collectList()
+                            .flatMap(detallesProcesados ->
+                                    // ✅ Actualizar estado de entrega de la orden completa
+                                    adapter.actualizarEstadoEntrega(idOrden, true)
+                                            .map(ordenActualizada -> construirRespuestaExitosa(
+                                                    request,
+                                                    productosSeleccionados,
+                                                    detallesProcesados,
+                                                    ordenActualizada))
+                            );
+                })
                 .onErrorResume(error -> {
-                    log.error("Error al actualizar estado de entrega para orden: {}", idOrden, error);
+                    log.error("Error al procesar aprobación para orden: {}", idOrden, error);
                     return Mono.just(construirRespuestaError(request, error.getMessage()));
                 });
     }
-     */
-    /*
-    private AprobarSalidaResponseDTO crearRespuestaSinAprobaciones(
-            AprobarSalidaRequestDTO request,
-            List<ProductoSalidaDTO> productosOmitidos) {
 
-        return AprobarSalidaResponseDTO.builder()
-                .idOrdenSalida(request.getId_ordensalida())
-                .codigoSalida(request.getCod_salida())
-                .mensaje("No hay productos seleccionados para aprobar")
-                .productosAprobados(0)
-                .productosOmitidos(productosOmitidos.size())
-                .detalleAprobacion(mapearProductosOmitidos(productosOmitidos))
-                .fechaAprobacion(OffsetDateTime.now())
-                .build();
+    // ✅ Método auxiliar para procesar cada detalle
+    private Mono<DetalleEgresoDTO> procesarDetalleAprobacion(
+            ArticuloRequerimiento articulo,
+            OrdenEgresoDTO ordenEgreso,
+            OrdenSalidaLogisticaPort adapter) {
+
+        // ✅ Mapear ArticuloRequerimiento → DetalleEgresoDTO
+        DetalleEgresoDTO detalle = articuloRequerimientoMapper.toDetalleEgreso(articulo);
+
+        // ✅ Usar el adapter específico de aprobación
+        if (adapter instanceof OrdenSalidaAprobacionPersistenceAdapter) {
+            OrdenSalidaAprobacionPersistenceAdapter aprobacionAdapter =
+                    (OrdenSalidaAprobacionPersistenceAdapter) adapter;
+            return aprobacionAdapter.procesarAprobacionDetalle(detalle, ordenEgreso);
+        } else {
+            return Mono.error(new IllegalStateException("Adapter incorrecto para proceso de aprobación"));
+        }
     }
-     */
-    /*
-    private AprobarSalidaResponseDTO construirRespuestaExitosa(
-            AprobarSalidaRequestDTO request,
-            List<ProductoSalidaDTO> productosSeleccionados,
-            List<ProductoSalidaDTO> productosOmitidos,
+
+    private ResponseAprobacionRequerimientoDTO construirRespuestaExitosa(
+            AprobarSalidaRequerimiento request,
+            List<ArticuloRequerimiento> productosSeleccionados,
+            List<DetalleEgresoDTO> detallesProcesados,
             OrdenEgresoDTO ordenActualizada) {
 
-        List<ProductoAprobadoDTO> detalleCompleto = new ArrayList<>();
-        detalleCompleto.addAll(mapearProductosAprobados(productosSeleccionados));
-        detalleCompleto.addAll(mapearProductosOmitidos(productosOmitidos));
-
-        return AprobarSalidaResponseDTO.builder()
-                .idOrdenSalida(request.getId_ordensalida())
+        return ResponseAprobacionRequerimientoDTO.builder()
+                .success(true)
+                .message("Salida de insumos aprobada exitosamente")
+                .idOrdenSalida(request.getIdOrdenSalida())
                 .codigoSalida(ordenActualizada.getCodEgreso())
-                .mensaje("Salida de insumos aprobada exitosamente")
                 .productosAprobados(productosSeleccionados.size())
-                .productosOmitidos(productosOmitidos.size())
-                .detalleAprobacion(detalleCompleto)
+                .detalleAprobacion(mapearProductosAprobados(productosSeleccionados))
                 .fechaAprobacion(OffsetDateTime.now())
                 .build();
     }
-     */
-    /*
-    private AprobarSalidaResponseDTO construirRespuestaError(
-            AprobarSalidaRequestDTO request,
+
+    private ResponseAprobacionRequerimientoDTO construirRespuestaError(
+            AprobarSalidaRequerimiento request,
             String mensajeError) {
 
-        return AprobarSalidaResponseDTO.builder()
-                .idOrdenSalida(request.getId_ordensalida())
-                .codigoSalida(request.getCod_salida())
-                .mensaje("Error al aprobar salida: " + mensajeError)
+        return ResponseAprobacionRequerimientoDTO.builder()
+                .success(false)
+                .message("Error al aprobar salida: " + mensajeError)
+                .idOrdenSalida(request.getIdOrdenSalida())
                 .productosAprobados(0)
-                .productosOmitidos(0)
-                .detalleAprobacion(Collections.emptyList())
                 .fechaAprobacion(OffsetDateTime.now())
                 .build();
     }
-     */
-    /*
-    private List<ProductoAprobadoDTO> mapearProductosAprobados(List<ProductoSalidaDTO> productos) {
+
+    private List<ProductoAprobadoDTO> mapearProductosAprobados(List<ArticuloRequerimiento> productos) {
         return productos.stream()
-                .map(producto -> ProductoAprobadoDTO.builder()
-                        .idDetalleOrden(producto.getId_detalle_orden())
-                        .idArticulo(producto.getId_articulo())
-                        .descripcionArticulo(producto.getDesc_articulo())
-                        .cantidad(producto.getCantidad())
-                        .unidad(producto.getAbrev_unidad())
-                        .estado("APROBADO")
-                        .motivo("Producto seleccionado para salida")
-                        .build())
+                .map(articuloRequerimientoMapper::toProductoAprobado)
                 .collect(Collectors.toList());
     }
-     */
-    /*
-    private List<ProductoAprobadoDTO> mapearProductosOmitidos(List<ProductoSalidaDTO> productos) {
-        return productos.stream()
-                .map(producto -> ProductoAprobadoDTO.builder()
-                        .idDetalleOrden(producto.getId_detalle_orden())
-                        .idArticulo(producto.getId_articulo())
-                        .descripcionArticulo(producto.getDesc_articulo())
-                        .cantidad(producto.getCantidad())
-                        .unidad(producto.getAbrev_unidad())
-                        .estado("OMITIDO")
-                        .motivo("Producto no seleccionado")
-                        .build())
-                .collect(Collectors.toList());
-    }
-     */
 }

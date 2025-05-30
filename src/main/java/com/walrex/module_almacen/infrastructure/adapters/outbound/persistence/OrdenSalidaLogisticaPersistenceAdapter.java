@@ -38,4 +38,9 @@ public class OrdenSalidaLogisticaPersistenceAdapter implements OrdenSalidaLogist
     public Mono<OrdenEgresoDTO> procesarSalidaPorLotes(OrdenEgresoDTO ordenSalida) {
         return null;
     }
+
+    @Override
+    public Mono<OrdenEgresoDTO> consultarYValidarOrdenParaAprobacion(Integer idOrdenSalida) {
+        return null;
+    }
 }

@@ -25,4 +25,6 @@ public interface OrdenSalidaLogisticaPort {
      * @return orden procesada
      */
     Mono<OrdenEgresoDTO> procesarSalidaPorLotes(OrdenEgresoDTO ordenSalida);
+
+    Mono<OrdenEgresoDTO> consultarYValidarOrdenParaAprobacion(Integer idOrdenSalida);
 }

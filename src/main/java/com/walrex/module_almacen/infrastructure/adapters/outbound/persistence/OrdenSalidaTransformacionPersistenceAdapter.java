@@ -330,4 +330,9 @@ public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaL
                 .doOnSuccess(orden ->
                         log.info("Salida por lotes procesada para orden: {}", orden.getId()));
     }
+
+    @Override
+    public Mono<OrdenEgresoDTO> consultarYValidarOrdenParaAprobacion(Integer idOrdenSalida) {
+        return null;
+    }
 }

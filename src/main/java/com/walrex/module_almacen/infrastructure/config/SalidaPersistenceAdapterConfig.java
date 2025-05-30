@@ -59,9 +59,9 @@ public class SalidaPersistenceAdapterConfig {
     @Bean
     @Qualifier("aprobacionSalida")
     public OrdenSalidaLogisticaPort ordenSalidaAprobarSalidaPort(
+            ArticuloRepository articuloRepository,
             OrdenSalidaRepository ordenSalidaRepository,
             DetailSalidaRepository detalleSalidaRepository,
-            ArticuloRepository articuloRepository,
             DetailSalidaLoteRepository detalleSalidaLoteRepository,
             DetalleInventoryRespository detalleInventoryRespository,
             OrdenSalidaEntityMapper ordenSalidaEntityMapper,
@@ -69,9 +69,9 @@ public class SalidaPersistenceAdapterConfig {
             KardexRepository kardexRepository
     ){
         return new OrdenSalidaAprobacionPersistenceAdapter(
+                articuloRepository,
                 ordenSalidaRepository,
                 detalleSalidaRepository,
-                articuloRepository,
                 detalleSalidaLoteRepository,
                 detalleInventoryRespository,
                 ordenSalidaEntityMapper,

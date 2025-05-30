@@ -9,7 +9,7 @@ import org.mapstruct.*;
 public interface ArticuloRequerimientoToDetalleMapper {
     @Mapping(target = "id", source = "idDetalleOrden", qualifiedByName = "integerToLong")
     @Mapping(target = "articulo.id", source = "idArticulo")
-    @Mapping(target = "articulo.nombre", source = "descArticulo")
+    @Mapping(target = "articulo.descripcion", source = "descArticulo")
     @Mapping(target = "idUnidad", source = "idUnidad")
     @Mapping(target = "cantidad", source = "cantidad")
     @Mapping(target = "a_lotes", ignore = true)
