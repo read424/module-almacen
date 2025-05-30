@@ -38,6 +38,11 @@ public abstract class BaseInventarioAdapter {
         if (ordenEgreso == null) {
             return Mono.error(new IllegalArgumentException("La orden de egreso no puede ser null"));
         }
+        if (ordenEgreso.getAlmacenOrigen() == null) {
+            return Mono.error(new IllegalArgumentException(
+                    String.format("Almacén origen no puede ser null para la orden %d", ordenEgreso.getId()))
+            );
+        }
         if (detalle.getArticulo() == null) {
             return Mono.error(new IllegalArgumentException(
                     String.format("Artículo no puede ser null para el detalle %d", detalle.getId())));
