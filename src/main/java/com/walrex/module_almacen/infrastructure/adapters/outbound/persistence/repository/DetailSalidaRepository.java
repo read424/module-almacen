@@ -4,6 +4,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.en
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
@@ -18,4 +19,7 @@ public interface DetailSalidaRepository extends ReactiveCrudRepository<DetailSal
 
     @Query("UPDATE almacenes.detalle_ordensalida SET entregado=1 WHERE id_detalle_orden=:idDetalleOrden")
     Mono<DetailSalidaEntity> assignedDelivered(Integer idDetalleOrden);
+
+    @Query("SELECT * FROM almacenes.detalle_ordensalida WHERE id_ordensalida = :idOrdenSalida")
+    Flux<DetailSalidaEntity> findByIdOrderSalida(Long idOrdenSalida);
 }
