@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -96,7 +97,8 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
                                 .build())
                         .build())
                 .doOnSuccess(orden ->
-                        log.info("✅ Orden {} preparada para aprobación", orden.getId()));    }
+                        log.info("✅ Orden {} preparada para aprobación", orden.getId()));
+    }
 
     /**
      * Método principal para procesar aprobación de un detalle específico
@@ -151,7 +153,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
     /**
      * Consulta los detalles de una orden de salida
      */
-    private Mono<List<DetalleEgresoDTO>> consultarDetallesOrdenSalida(OrdenEgresoDTO ordenEgreso) {
+    protected Mono<List<DetalleEgresoDTO>> consultarDetallesOrdenSalida(OrdenEgresoDTO ordenEgreso) {
         if (ordenEgreso == null || ordenEgreso.getId() == null) {
             return Mono.error(new IllegalArgumentException("La orden de egreso no puede ser null"));
         }
@@ -185,7 +187,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
     /**
      * Valida que el detalle esté en la orden, no esté entregado y las cantidades coincidan
      */
-    private Mono<Void> validarDetalleEnOrden(DetalleEgresoDTO detalle, List<DetalleEgresoDTO> detallesOrden) {
+    protected Mono<Void> validarDetalleEnOrden(DetalleEgresoDTO detalle, List<DetalleEgresoDTO> detallesOrden) {
         Long idDetalle = detalle.getId();
         return Mono.fromCallable(() -> {
                     // ✅ Buscar el detalle en la lista
@@ -218,76 +220,17 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
     /**
      * Marca el detalle como entregado usando assignedDelivered
      */
-    private Mono<Void> marcarDetalleComoEntregado(DetalleEgresoDTO detalle) {
+    protected Mono<Void> marcarDetalleComoEntregado(DetalleEgresoDTO detalle) {
         return detalleSalidaRepository.assignedDelivered(detalle.getId().intValue())
                 .doOnSuccess(updated ->
                         log.debug("✅ Detalle {} marcado como entregado", detalle.getId()))
                 .then();
     }
-    /*
-    private Mono<DetalleEgresoDTO> procesarEntregaYConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
-        return buscarInfoConversion(detalle, ordenSalida)
-                .flatMap(infoConversion -> aplicarConversion(detalle, infoConversion))
-                .doOnSuccess(detalleActualizado ->
-                        log.debug("✅ Conversión aplicada para artículo {}: stock={}",
-                                detalleActualizado.getArticulo().getId(),
-                                detalleActualizado.getArticulo().getStock()));
-    }
 
-    private Mono<ArticuloEntity> buscarInfoConversion(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenEgreso) {
-        // ✅ Validaciones
-        if (detalle == null) {
-            return Mono.error(new IllegalArgumentException("El detalle no puede ser null"));
-        }
-        if (ordenEgreso == null) {
-            return Mono.error(new IllegalArgumentException("La orden de egreso no puede ser null"));
-        }
-        if (detalle.getArticulo() == null) {
-            return Mono.error(new IllegalArgumentException(
-                    String.format("Artículo no puede ser null para el detalle %d", detalle.getId())));
-        }
-        if (detalle.getArticulo().getId() == null) {
-            return Mono.error(new IllegalArgumentException(
-                    String.format("ID de artículo no puede ser null para el detalle %d", detalle.getId())));
-        }
-
-        Integer idAlmacen = ordenEgreso.getAlmacenOrigen().getIdAlmacen();
-        Integer idArticulo = detalle.getArticulo().getId();
-
-        log.debug("🔍 Buscando información de conversión para artículo {} en almacén {}", idArticulo, idAlmacen);
-
-        return articuloRepository.getInfoConversionArticulo(idAlmacen, idArticulo)
-                .doOnNext(info -> log.info("✅ Información de conversión encontrada: {}", info))
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "No se encontró información de conversión para el artículo: " + idArticulo
-                )));
-    }
-
-    private Mono<DetalleEgresoDTO> aplicarConversion(DetalleEgresoDTO detalle, ArticuloEntity infoConversion) {
-        if (detalle.getIdUnidad() == null) {
-            String errorMsg = String.format("ID de unidad no puede ser null para el detalle %d del artículo %d",
-                    detalle.getId(), detalle.getArticulo().getId());
-            log.error("❌ {}", errorMsg);
-            return Mono.error(new IllegalArgumentException(errorMsg));
-        }
-
-        if (!detalle.getIdUnidad().equals(infoConversion.getIdUnidadConsumo())) {
-            detalle.getArticulo().setIdUnidadSalida(infoConversion.getIdUnidadConsumo());
-            detalle.getArticulo().setIs_multiplo(infoConversion.getIsMultiplo());
-            detalle.getArticulo().setValor_conv(infoConversion.getValorConv());
-            detalle.getArticulo().setStock(infoConversion.getStock());
-        } else {
-            detalle.getArticulo().setIdUnidadSalida(detalle.getIdUnidad());
-        }
-
-        return Mono.just(detalle);
-    }
-    */
     /**
      * Registra kardex por detalle
      */
-    private Mono<Void> registrarKardexPorDetalle(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
+    protected Mono<Void> registrarKardexPorDetalle(DetalleEgresoDTO detalle, OrdenEgresoDTO ordenSalida) {
         if (detalle.getArticulo().getStock().compareTo(BigDecimal.ZERO) < 0) {
             String errorMsg = String.format("Stock insuficiente para artículo %d. Stock actual: %s",
                     detalle.getArticulo().getId(), detalle.getArticulo().getStock());
@@ -319,6 +262,8 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
                 detalle.getArticulo().getId(), cantidadConvertida, stockAntesDeSalida);
 
         return detalleSalidaLoteRepository.findByIdDetalleOrden(detalle.getId())
+                .switchIfEmpty(Flux.error(new IllegalStateException(
+                        String.format("No se encontraron lotes para el detalle %d", detalle.getId()))))
                 .concatMap(salidaLote -> registrarKardexPorLote(salidaLote, detalle, ordenSalida))
                 .then();
     }
@@ -326,7 +271,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
     /**
      * Registra kardex por lote específico
      */
-    private Mono<Void> registrarKardexPorLote(DetailSalidaLoteEntity salidaLote,
+    protected Mono<Void> registrarKardexPorLote(DetailSalidaLoteEntity salidaLote,
                                               DetalleEgresoDTO detalle,
                                               OrdenEgresoDTO ordenSalida) {
 
