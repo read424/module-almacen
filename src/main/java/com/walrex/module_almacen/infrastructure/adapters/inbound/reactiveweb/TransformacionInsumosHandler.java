@@ -2,7 +2,7 @@ package com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb;
 
 import com.walrex.module_almacen.application.ports.input.ProcesarTransformacionUseCase;
 import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.OrdenIngresoTransformacionRequestDto;
-import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.mapper.OrdenIngresoTransformacionMapper;
+import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.mapper.OrdenIngresoTransformacionRequestMapper;
 import com.walrex.module_almacen.infrastructure.adapters.inbound.rest.dto.ResponseCreateOrdenIngresoLogisticaDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ import org.springframework.validation.Validator;
 @Slf4j
 public class TransformacionInsumosHandler {
     private final ProcesarTransformacionUseCase procesarTransformacionUseCase;
-    private final OrdenIngresoTransformacionMapper ordenIngresoTransformacionMapper;
+    private final OrdenIngresoTransformacionRequestMapper ordenIngresoTransformacionMapper;
     private final Validator validator;
 
     public Mono<ServerResponse> crearConversion(ServerRequest request){
