@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
-@Qualifier("aprobacionSalida")
 @Slf4j
 public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapter implements OrdenSalidaLogisticaPort {
 
