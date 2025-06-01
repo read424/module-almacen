@@ -10,7 +10,7 @@ import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto
 import org.mapstruct.*;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface OrdenIngresoTransformacionMapper {
+public interface OrdenIngresoTransformacionRequestMapper {
 
     @Mapping(source = "idArticulo", target = "articulo", qualifiedByName = "mapArticulo")
     @Mapping(source = "unidad", target = "unidad_ingreso", qualifiedByName = "mapUnidad")

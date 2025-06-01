@@ -1,4 +1,4 @@
-package com.walrex.module_almacen.application.ports.input;
+package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
 import com.walrex.module_almacen.application.ports.output.OrdenIngresoLogisticaPort;
 import com.walrex.module_almacen.domain.model.enums.TipoOrdenIngreso;

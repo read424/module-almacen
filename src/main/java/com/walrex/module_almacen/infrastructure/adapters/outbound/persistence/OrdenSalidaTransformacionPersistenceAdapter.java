@@ -25,8 +25,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
-@Component
-@Qualifier("transformacionSalida")
 @RequiredArgsConstructor
 @Slf4j
 public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaLogisticaPort {

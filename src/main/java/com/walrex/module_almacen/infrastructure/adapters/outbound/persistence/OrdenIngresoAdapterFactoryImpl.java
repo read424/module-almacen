@@ -1,24 +1,27 @@
 package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
-import com.walrex.module_almacen.application.ports.input.OrdenIngresoAdapterFactory;
 import com.walrex.module_almacen.application.ports.output.OrdenIngresoLogisticaPort;
 import com.walrex.module_almacen.domain.model.enums.TipoOrdenIngreso;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
-@RequiredArgsConstructor
+@Slf4j
 public class OrdenIngresoAdapterFactoryImpl implements OrdenIngresoAdapterFactory {
 
     private final OrdenIngresoLogisticaPort ordenIngresoLogisticaAdapter;
-
-    @Qualifier("telaCruda")
     private final OrdenIngresoLogisticaPort ordenIngresoTelaCrudaAdapter;
-
-    @Qualifier("transformacion")
     private final OrdenIngresoLogisticaPort ordenIngresoTransformacionAdapter;
+
+    public OrdenIngresoAdapterFactoryImpl(
+            OrdenIngresoLogisticaPort ordenIngresoLogisticaAdapter,
+            @Qualifier("telaCruda") OrdenIngresoLogisticaPort ordenIngresoTelaCrudaAdapter,
+            @Qualifier("transformacion") OrdenIngresoLogisticaPort ordenIngresoTransformacionAdapter
+    ){
+        this.ordenIngresoLogisticaAdapter=ordenIngresoLogisticaAdapter;
+        this.ordenIngresoTelaCrudaAdapter=ordenIngresoTelaCrudaAdapter;
+        this.ordenIngresoTransformacionAdapter=ordenIngresoTransformacionAdapter;
+    }
 
     @Override
     public Mono<OrdenIngresoLogisticaPort> getAdapter(TipoOrdenIngreso tipoOrden) {

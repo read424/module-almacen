@@ -17,7 +17,6 @@ import io.r2dbc.spi.R2dbcTransientResourceException;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -26,7 +25,6 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
 @SuperBuilder
 @Slf4j
 public abstract class BaseOrdenIngresoPersistenceAdapter implements OrdenIngresoLogisticaPort {

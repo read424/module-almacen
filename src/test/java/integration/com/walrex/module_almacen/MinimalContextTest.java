@@ -1,10 +1,6 @@
 package com.walrex.module_almacen;
 
-import com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import integration.com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

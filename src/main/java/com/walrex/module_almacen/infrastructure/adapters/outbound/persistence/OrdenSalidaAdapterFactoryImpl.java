@@ -9,18 +9,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
-@RequiredArgsConstructor
 @Slf4j
 public class OrdenSalidaAdapterFactoryImpl implements OrdenSalidaAdapterFactory {
 
     private final OrdenSalidaLogisticaPort ordenSalidaLogisticaAdapter;
-
-    @Qualifier("transformacionSalida")
     private final OrdenSalidaLogisticaPort ordenSalidaTransformacionAdapter;
-
-    @Qualifier("aprobacionSalida")
     private final OrdenSalidaLogisticaPort ordenSalidaAprobacionAdapter;
+
+    public OrdenSalidaAdapterFactoryImpl(
+            OrdenSalidaLogisticaPort ordenSalidaLogisticaAdapter,
+            @Qualifier("transformacionSalida") OrdenSalidaLogisticaPort ordenSalidaTransformacionAdapter,
+            @Qualifier("aprobacionSalida") OrdenSalidaLogisticaPort ordenSalidaAprobacionAdapter
+
+    ){
+        this.ordenSalidaLogisticaAdapter=ordenSalidaLogisticaAdapter;
+        this.ordenSalidaTransformacionAdapter=ordenSalidaTransformacionAdapter;
+        this.ordenSalidaAprobacionAdapter=ordenSalidaAprobacionAdapter;
+    }
 
     @Override
     public Mono<OrdenSalidaLogisticaPort> getAdapter(TipoOrdenSalida tipoOrden) {

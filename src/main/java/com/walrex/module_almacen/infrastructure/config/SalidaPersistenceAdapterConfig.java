@@ -1,6 +1,8 @@
 package com.walrex.module_almacen.infrastructure.config;
 
+import com.walrex.module_almacen.application.ports.input.OrdenSalidaAdapterFactory;
 import com.walrex.module_almacen.application.ports.output.OrdenSalidaLogisticaPort;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenSalidaAdapterFactoryImpl;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenSalidaAprobacionPersistenceAdapter;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenSalidaLogisticaPersistenceAdapter;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenSalidaTransformacionPersistenceAdapter;
@@ -78,5 +80,18 @@ public class SalidaPersistenceAdapterConfig {
                 detailSalidaMapper,
                 kardexRepository
             );
+    }
+
+    @Bean
+    public OrdenSalidaAdapterFactory ordenSalidaAdapterFactory(
+            OrdenSalidaLogisticaPort ordenSalidaLogisticaAdapter,
+            @Qualifier("transformacionSalida") OrdenSalidaLogisticaPort ordenSalidaTransformacionAdapter,
+            @Qualifier("aprobacionSalida") OrdenSalidaLogisticaPort ordenSalidaAprobacionAdapter) {
+
+        return new OrdenSalidaAdapterFactoryImpl(
+                ordenSalidaLogisticaAdapter,
+                ordenSalidaTransformacionAdapter,
+                ordenSalidaAprobacionAdapter
+        );
     }
 }

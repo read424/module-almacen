@@ -8,17 +8,13 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.re
 import io.r2dbc.spi.R2dbcException;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-@Component
 @SuperBuilder
 @Slf4j
-@Primary
 public class OrdenIngresoLogisticaPersistenceAdapter  extends BaseOrdenIngresoPersistenceAdapter {
     protected final KardexRepository kardexRepository;
 

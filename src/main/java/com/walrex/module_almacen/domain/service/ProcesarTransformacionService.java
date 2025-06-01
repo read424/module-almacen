@@ -1,6 +1,5 @@
 package com.walrex.module_almacen.domain.service;
 
-import com.walrex.module_almacen.application.ports.input.OrdenIngresoAdapterFactory;
 import com.walrex.module_almacen.application.ports.input.OrdenSalidaAdapterFactory;
 import com.walrex.module_almacen.application.ports.input.ProcesarTransformacionUseCase;
 import com.walrex.module_almacen.domain.model.OrdenIngreso;
@@ -9,6 +8,7 @@ import com.walrex.module_almacen.domain.model.enums.TipoOrdenIngreso;
 import com.walrex.module_almacen.domain.model.enums.TipoOrdenSalida;
 import com.walrex.module_almacen.domain.model.mapper.OrdenIngresoTransformacionMapper;
 import com.walrex.module_almacen.domain.model.mapper.OrdenSalidaTransformacionMapper;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenIngresoAdapterFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -6,7 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "com.walrex.module_almacen")
-public class ModuleAlmacenApplication {
+public class ModuleAlmacenTestApplication {
     public static void main(String[] args) {
         SpringApplication.run(ModuleAlmacenApplication.class, args);
     }

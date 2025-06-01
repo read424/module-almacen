@@ -7,15 +7,11 @@ import com.walrex.module_almacen.domain.model.OrdenIngreso;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.DetailsIngresoEntity;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
-@Component
 @SuperBuilder
 @Slf4j
-@Qualifier("transformacion")
 public class OrdenIngresoTransformacionPersistenceAdapter extends BaseOrdenIngresoPersistenceAdapter {
     private final KardexRegistrationStrategy kardexStrategy;
     private final OrdenSalidaAdapterFactory salidaAdapterFactory;

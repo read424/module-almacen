@@ -1,16 +1,12 @@
 package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
-import com.walrex.module_almacen.ModuleAlmacenApplication;
 import com.walrex.module_almacen.common.Exception.OrdenIngresoException;
-import com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
-import com.walrex.module_almacen.config.R2dbcTestConfig;
+import integration.com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
+import integration.com.walrex.module_almacen.config.R2dbcTestConfig;
 import com.walrex.module_almacen.domain.model.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.KardexRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
