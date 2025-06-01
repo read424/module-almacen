@@ -1,9 +1,9 @@
 package com.walrex.module_almacen.domain.service;
 
-import com.walrex.module_almacen.application.ports.input.OrdenIngresoAdapterFactory;
 import com.walrex.module_almacen.application.ports.output.OrdenIngresoLogisticaPort;
 import com.walrex.module_almacen.domain.model.*;
 import com.walrex.module_almacen.domain.model.enums.TipoOrdenIngreso;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenIngresoAdapterFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
