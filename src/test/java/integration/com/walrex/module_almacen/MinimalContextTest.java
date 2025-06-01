@@ -1,4 +1,4 @@
-package com.walrex.module_almacen;
+package integration.com.walrex.module_almacen;
 
 import integration.com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
 

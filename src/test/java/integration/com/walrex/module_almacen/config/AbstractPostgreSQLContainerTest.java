@@ -1,4 +1,4 @@
-package com.walrex.module_almacen.config;
+package integration.com.walrex.module_almacen.config;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
