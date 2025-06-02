@@ -402,7 +402,7 @@ CREATE TABLE almacenes.ordeningreso (
 	status_bk int4 NULL,
 	id_proceso int4 NULL,
 	id_motivo_rechazo int4 NULL,
-	upate_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
+	update_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
 	id_orden_serv int4 NULL
 );
 
@@ -413,6 +413,7 @@ INSERT INTO almacenes.ordeningreso (id_ordeningreso, id_cliente, id_motivo, id_c
     (281997, 86, 4, 1, 1179, '2025-05-09', '2025-05-09', 'F001', 'ALGI-I05856', 1, 13557, 1),
     (282599, 86, 4, 1, 1181, '2025-05-12', '2025-05-12', 'F001', 'ALGI-I05861', 1, 13569, 1)
  ;
+ALTER SEQUENCE almacenes.ordeningreso_id_ordeningreso_seq RESTART WITH 287661;
 
 CREATE OR REPLACE FUNCTION almacenes.update_code_ingreso()
  RETURNS trigger
@@ -440,6 +441,7 @@ BEGIN
             RAISE EXCEPTION '%', 'El motivo no coincide con el almacen';
         END IF;
         NEW.cod_ingreso:= trim(lc_abrev)||LPAD(trim(lc_correlativo::varchar(7)), 5,'0');
+        RAISE NOTICE 'SE GENERO EL CODIGO %', NEW.cod_ingreso;
     END IF;
     RETURN NEW ;
 END;
@@ -487,6 +489,8 @@ INSERT INTO almacenes.detordeningreso (id_detordeningreso, id_ordeningreso, lote
     (302522, 281358, '001175-1', 289, 120.00000, 1, 2, 2.15000, 0),
     (303180, 281997, '001179-1', 289, 240.00000, 1, 2, 2.15000, 0),
     (303834, 282599, '001181-1', 289, 120.00000, 1, 2, 2.15000, 0);
+
+ALTER SEQUENCE almacenes.detordeningreso_id_detordeningreso_seq RESTART WITH 309161;
 
 CREATE OR REPLACE FUNCTION almacenes.add_ingreso_compra()
     RETURNS trigger

@@ -50,6 +50,6 @@ kafka:
 logging:
   level:
     com.walrex.module_almacen: DEBUG
-    #org.springframework.r2dbc: DEBUG
-    #io.r2dbc.postgresql: DEBUG
-    #org.testcontainers: INFO
+    org.springframework.r2dbc: DEBUG
+    io.r2dbc.postgresql: DEBUG
+    org.testcontainers: INFO

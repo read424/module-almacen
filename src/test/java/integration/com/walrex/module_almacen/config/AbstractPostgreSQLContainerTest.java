@@ -14,10 +14,27 @@ public class AbstractPostgreSQLContainerTest {
                 .withPassword("test_password")
                 .withReuse(true)  // Habilitar reutilización entre ejecuciones de pruebas
                 .withExposedPorts(5432)
-                .withInitScript("db/init-test-db.sql");
+                .withInitScript("db/init-test-db.sql")
+                .withCommand("postgres",
+                        "-c", "log_min_messages=notice",
+                        "-c", "log_statement=all",
+                        "-c", "log_destination=stderr",
+                        "-c", "logging_collector=off"
+                );
 
         // Iniciar el contenedor al cargar la clase
         postgreSQLContainer.start();
+
+        // ✅ Seguir los logs del contenedor
+        postgreSQLContainer.followOutput(frame -> {
+            String logLine = frame.getUtf8String();
+            if (logLine.contains("SE GENERO EL CODIGO") ||
+                    logLine.contains("NOTICE") ||
+                    logLine.contains("INSERT") ||
+                    logLine.contains("UPDATE")) {
+                System.out.println("🐘 PostgreSQL: " + logLine.trim());
+            }
+        });
 
         // Registro de información al iniciar
         System.out.println("🚀 PostgreSQL Container started at: " + postgreSQLContainer.getJdbcUrl());
