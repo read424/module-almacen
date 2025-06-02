@@ -47,7 +47,14 @@ public abstract class BaseOrdenIngresoPersistenceAdapter implements OrdenIngreso
         OrdenIngresoEntity entity = mapper.toEntity(ordenIngreso);
         return ordenIngresoRepository.save(entity)
                 .doOnSuccess(savedEntity ->
-                    log.info("Orden de ingreso guardada con ID: {}", savedEntity.getId_ordeningreso())
+                    log.info("✅ Información de orden guardada: {}", savedEntity)
+                )
+                // ✅ AGREGAR: Buscar la entidad completa después del save
+                .flatMap(savedEntity ->
+                        ordenIngresoRepository.findById(savedEntity.getId_ordeningreso())
+                                .doOnSuccess(refreshedEntity ->
+                                        log.info("🔄 Información de orden refrescada: {}", refreshedEntity)
+                                )
                 )
                 .onErrorResume(R2dbcException.class, ex -> {
                     String prefix;

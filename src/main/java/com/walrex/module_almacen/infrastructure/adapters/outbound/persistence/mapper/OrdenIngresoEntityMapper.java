@@ -20,8 +20,8 @@ public interface OrdenIngresoEntityMapper {
     @Mapping(source = "idOrigen", target = "id_origen")
     @Mapping(source = "comprobante", target = "id_comprobante")
     @Mapping(source = "nroComprobante", target = "nu_comprobante")
-    @Mapping(source = "fechaIngreso", target = "fec_ingreso", qualifiedByName = "localDateToDate")
-    @Mapping(source = "fechaComprobante", target = "fec_referencia", qualifiedByName = "localDateToDate")
+    @Mapping(source = "fechaIngreso", target = "fec_ingreso")
+    @Mapping(source = "fechaComprobante", target = "fec_referencia")
     @Mapping(source = "codSerie", target = "nu_serie")
     @Mapping(source = "almacen.idAlmacen", target = "id_almacen")
     @Mapping(source = "comprobanteRef", target = "comprobante_ref")
@@ -33,7 +33,7 @@ public interface OrdenIngresoEntityMapper {
     @Mapping(source = "fec_ingreso", target = "fechaIngreso", qualifiedByName = "dateToLocalDate")
     @Mapping(source = "fec_referencia", target = "fechaComprobante", qualifiedByName = "dateToLocalDate")
     @Mapping(target = "almacen", expression = "java(buildAlmacen(entity.getId_almacen()))")
-    @Mapping(target = "detalles", ignore = true)
+    //@Mapping(target = "detalles", ignore = true)
     OrdenIngreso toDomain(OrdenIngresoEntity entity);
 
     @Named("integerToLong")
@@ -57,8 +57,8 @@ public interface OrdenIngresoEntityMapper {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    @Named("localDateToDate") // CAMBIAR NOMBRE AQUÍ
-    default Date localDateToDate(LocalDate localDate) { // CAMBIAR NOMBRE AQUÍ
+    @Named("localDateToDate") //
+    default Date localDateToDate(LocalDate localDate) { //
         if (localDate == null) {
             return null;
         }

@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Date;
 
@@ -25,9 +26,9 @@ public class OrdenIngresoEntity {
     private Integer id_comprobante;
     private String nu_comprobante;
     private String observacion;
-    private Date fec_ingreso;
+    private LocalDate fec_ingreso;
     @Column("fec_ref")
-    private Date fec_referencia;
+    private LocalDate fec_referencia;
     @Column("fec_registro")
     private OffsetDateTime create_at;
     private Integer status;

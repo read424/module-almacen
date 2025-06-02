@@ -40,7 +40,7 @@ public class OrdenIngresoPersistenceAdapter implements OrdenIngresoPersistencePo
                 .idMotivo(entity.getId_motivo())
                 .idAlmacen(entity.getId_almacen())
                 .observacion(entity.getObservacion())
-                .fechaIngreso(convertToLocalDate(entity.getFec_ingreso()))
+                .fechaIngreso(entity.getFec_ingreso())
                 .build();
     }
 
