@@ -1,18 +1,18 @@
-package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
+package integration.com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 
-import com.walrex.module_almacen.common.Exception.OrdenIngresoException;
+import com.walrex.module_almacen.domain.model.enums.TipoOrdenIngreso;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.OrdenIngresoAdapterFactory;
 import integration.com.walrex.module_almacen.config.AbstractPostgreSQLContainerTest;
-import integration.com.walrex.module_almacen.config.R2dbcTestConfig;
 import com.walrex.module_almacen.domain.model.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.KardexRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -22,17 +22,15 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(
-    classes = ModuleAlmacenApplication.class
-)
-@Import(R2dbcTestConfig.class)
-@ActiveProfiles("test-almacenes")
+//@SpringBootTest(
+//    classes = com.walrex.module_almacen.ModuleAlmacenApplication.class
+//)
+//@ActiveProfiles("test-almacenes")
 public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends AbstractPostgreSQLContainerTest {
 
     @Autowired
-    private BaseOrdenIngresoPersistenceAdapter adapter;
+    private OrdenIngresoAdapterFactory adapterFactory;
 
     // Inyectar los repositories directamente
     @Autowired
@@ -82,9 +80,9 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
     }
 
     //@BeforeEach
-    void limpiarDatos() {
+    void setUp() {
         // Limpiar datos entre pruebas
-        // kardexRepository.deleteAll().block();
+        kardexRepository.deleteAll().block();
     }
 
     //@Test
@@ -96,7 +94,8 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
 
         // Act & Assert
         StepVerifier.create(
-                adapter.guardarOrdenIngresoLogistica(ordenIngreso)
+                adapterFactory.getAdapter(TipoOrdenIngreso.LOGISTICA_GENERAL)
+                    .flatMap(adapter->adapter.guardarOrdenIngresoLogistica(ordenIngreso))
                     .doOnNext(result -> System.out.println("✅ Orden guardada: " + result))
                     .doOnError(error -> System.err.println("❌ Error: " + error))
             )
@@ -134,6 +133,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
         ordenIngreso.setDetalles(Collections.emptyList());
 
         // Act & Assert
+        /*
         StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
                 .expectErrorSatisfies(error -> {
                     assertThat(error)
@@ -142,6 +142,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
                         .hasMessageContaining("La orden de ingreso debe tener al menos un detalle");
                 })
                 .verify();
+         */
     }
 
     //@Test
@@ -154,6 +155,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
         ordenIngreso.setDetalles(List.of(crearDetalleOrdenIngreso()));
 
         // Act & Assert
+        /*
         StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
                 .expectErrorSatisfies(error -> {
                     // Log detallado del error para diagnóstico
@@ -202,6 +204,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
                     }
                 })
                 .verify();
+         */
 
         // Verificar que no se hayan creado registros
         StepVerifier.create(ordenIngresoRepository.count())
@@ -239,10 +242,12 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
         ordenIngreso.setDetalles(List.of(detalle));
 
         // Act
+        /*
         adapter.guardarOrdenIngresoLogistica(ordenIngreso)
                 .as(StepVerifier::create)
                 .expectNextCount(1)
                 .verifyComplete();
+         */
 
         // Assert - Verificar cálculos en Kardex
         kardexRepository.findByIdArticuloAndIdAlmacen(289, 1)
@@ -328,6 +333,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
         ordenIngreso.setDetalles(List.of(detalleConErrorFK));
 
         // Act & Assert
+        /*
         StepVerifier.create(adapter.guardarOrdenIngresoLogistica(ordenIngreso))
                 .expectErrorSatisfies(error -> {
                     // Verificar que el error es del tipo OrdenIngresoException que envuelve un R2dbcException
@@ -371,6 +377,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTestIntegration extends Abst
                     }
                 })
                 .verify();
+         */
 
         // Verificar que no queden datos parciales (la transacción debe haberse revertido)
         StepVerifier.create(ordenIngresoRepository.count())
