@@ -33,7 +33,7 @@ public class OrdenIngresoTelaCrudaPersistenceAdapterTest {
     private OrdenIngresoRepository ordenIngresoRepository;
 
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
 
     @Mock
     private DetailsIngresoRepository detalleRepository;

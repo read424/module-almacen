@@ -6,18 +6,11 @@ import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.domain.model.enums.TypeMovimiento;
 import com.walrex.module_almacen.domain.model.exceptions.StockInsuficienteException;
-import com.walrex.module_almacen.infrastructure.adapters.inbound.reactiveweb.dto.AlmacenDto;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.*;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.DetailSalidaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenSalidaEntityMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -41,7 +34,7 @@ public class OrdenSalidaAprobacionPersistenceAdapter extends BaseInventarioAdapt
 
     // ✅ Constructor explícito (alternativa a @SuperBuilder)
     public OrdenSalidaAprobacionPersistenceAdapter(
-            ArticuloRepository articuloRepository,                    // Para super()
+            ArticuloAlmacenRepository articuloRepository,                    // Para super()
             OrdenSalidaRepository ordenSalidaRepository,             // Para this
             DetailSalidaRepository detalleSalidaRepository,
             DetailSalidaLoteRepository detalleSalidaLoteRepository,

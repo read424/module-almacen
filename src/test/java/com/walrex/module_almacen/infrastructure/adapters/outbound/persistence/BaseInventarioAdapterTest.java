@@ -5,7 +5,7 @@ import com.walrex.module_almacen.domain.model.Articulo;
 import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.ArticuloEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloAlmacenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class BaseInventarioAdapterTest {
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
 
     private TestableBaseInventarioAdapter adapter;
 
@@ -346,7 +346,7 @@ public class BaseInventarioAdapterTest {
     // ✅ Clase interna para testing
     private static class TestableBaseInventarioAdapter extends BaseInventarioAdapter {
 
-        public TestableBaseInventarioAdapter(ArticuloRepository articuloRepository) {
+        public TestableBaseInventarioAdapter(ArticuloAlmacenRepository articuloRepository) {
             super(articuloRepository);
         }
 

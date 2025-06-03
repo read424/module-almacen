@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface ArticuloRepository extends ReactiveCrudRepository<ArticuloEntity, Integer> {
+public interface ArticuloAlmacenRepository extends ReactiveCrudRepository<ArticuloEntity, Integer> {
 
     @Query("SELECT COALESCE(conv_si.valor_conv, 0) AS valor_conv " +
             ", COALESCE(conv_si.is_multiplo, '0') AS is_multiplo, fam.id_tipo_producto " +

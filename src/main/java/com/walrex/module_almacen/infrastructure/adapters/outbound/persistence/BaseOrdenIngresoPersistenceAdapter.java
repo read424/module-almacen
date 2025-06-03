@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class BaseOrdenIngresoPersistenceAdapter implements OrdenIngresoLogisticaPort {
     protected final OrdenIngresoRepository ordenIngresoRepository;
-    protected final ArticuloRepository articuloRepository;
+    protected final ArticuloAlmacenRepository articuloRepository;
     protected final DetailsIngresoRepository detalleRepository;
     protected final OrdenIngresoEntityMapper mapper;
     protected final ArticuloIngresoLogisticaMapper articuloIngresoLogisticaMapper;

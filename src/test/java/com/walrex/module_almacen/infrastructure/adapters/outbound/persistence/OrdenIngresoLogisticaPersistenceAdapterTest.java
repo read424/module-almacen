@@ -5,7 +5,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.en
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.KardexEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.ArticuloIngresoLogisticaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenIngresoEntityMapper;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloAlmacenRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.KardexRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
@@ -32,7 +32,7 @@ public class OrdenIngresoLogisticaPersistenceAdapterTest {
     private OrdenIngresoRepository ordenIngresoRepository;
 
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
 
     @Mock
     private DetailsIngresoRepository detalleRepository;

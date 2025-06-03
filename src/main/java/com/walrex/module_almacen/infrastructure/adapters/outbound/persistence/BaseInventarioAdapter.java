@@ -3,7 +3,7 @@ package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 import com.walrex.module_almacen.domain.model.dto.DetalleEgresoDTO;
 import com.walrex.module_almacen.domain.model.dto.OrdenEgresoDTO;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.ArticuloEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloAlmacenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 public abstract class BaseInventarioAdapter {
-    protected final ArticuloRepository articuloRepository;
+    protected final ArticuloAlmacenRepository articuloRepository;
 
     /**
      * Procesa entrega y conversión (adaptado de OrdenSalidaTransformacionPersistenceAdapter)

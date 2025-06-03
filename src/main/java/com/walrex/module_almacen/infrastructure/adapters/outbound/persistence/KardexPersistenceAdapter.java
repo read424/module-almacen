@@ -3,7 +3,6 @@ package com.walrex.module_almacen.infrastructure.adapters.outbound.persistence;
 import com.walrex.module_almacen.application.ports.output.GuardarKardexPort;
 import com.walrex.module_almacen.domain.Kardex;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.KardexEntity;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.KardexRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

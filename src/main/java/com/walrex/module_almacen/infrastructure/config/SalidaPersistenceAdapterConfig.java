@@ -39,7 +39,7 @@ public class SalidaPersistenceAdapterConfig {
     public OrdenSalidaLogisticaPort ordenSalidaTransformacionPort(
             OrdenSalidaRepository ordenSalidaRepository,
             DetailSalidaRepository detalleSalidaRepository,
-            ArticuloRepository articuloRepository,
+            ArticuloAlmacenRepository articuloRepository,
             DetailSalidaLoteRepository detalleSalidaLoteRepository,
             DetalleInventoryRespository detalleInventoryRespository,
             OrdenSalidaEntityMapper ordenSalidaEntityMapper,
@@ -61,7 +61,7 @@ public class SalidaPersistenceAdapterConfig {
     @Bean
     @Qualifier("aprobacionSalida")
     public OrdenSalidaLogisticaPort ordenSalidaAprobarSalidaPort(
-            ArticuloRepository articuloRepository,
+            ArticuloAlmacenRepository articuloRepository,
             OrdenSalidaRepository ordenSalidaRepository,
             DetailSalidaRepository detalleSalidaRepository,
             DetailSalidaLoteRepository detalleSalidaLoteRepository,

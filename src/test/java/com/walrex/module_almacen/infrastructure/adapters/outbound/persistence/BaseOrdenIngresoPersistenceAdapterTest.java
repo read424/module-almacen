@@ -7,13 +7,12 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.en
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.OrdenIngresoEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.ArticuloIngresoLogisticaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenIngresoEntityMapper;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloAlmacenRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -25,10 +24,8 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +38,7 @@ public class BaseOrdenIngresoPersistenceAdapterTest {
     private OrdenIngresoRepository ordenIngresoRepository;
 
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
 
     @Mock
     private DetailsIngresoRepository detalleRepository;

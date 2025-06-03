@@ -19,7 +19,7 @@ public class IngresoPersistenceAdapterConfig {
     @Primary
     public OrdenIngresoLogisticaPort ordenIngresoLogisticaAdapter(
             OrdenIngresoRepository ordenIngresoRepository,
-            ArticuloRepository articuloRepository,
+            ArticuloAlmacenRepository articuloRepository,
             DetailsIngresoRepository detalleRepository,
             OrdenIngresoEntityMapper mapper,
             ArticuloIngresoLogisticaMapper articuloIngresoLogisticaMapper,
@@ -39,7 +39,7 @@ public class IngresoPersistenceAdapterConfig {
     @Qualifier("telaCruda")
     public OrdenIngresoLogisticaPort ordenIngresoTelaCrudaAdapter(
             OrdenIngresoRepository ordenIngresoRepository,
-            ArticuloRepository articuloRepository,
+            ArticuloAlmacenRepository articuloRepository,
             DetailsIngresoRepository detalleRepository,
             OrdenIngresoEntityMapper mapper,
             ArticuloIngresoLogisticaMapper articuloIngresoLogisticaMapper,
@@ -59,7 +59,7 @@ public class IngresoPersistenceAdapterConfig {
     @Qualifier("transformacion")
     public OrdenIngresoLogisticaPort ordenIngresoTransformacionAdapter(
             OrdenIngresoRepository ordenIngresoRepository,
-            ArticuloRepository articuloRepository,
+            ArticuloAlmacenRepository articuloRepository,
             DetailsIngresoRepository detalleRepository,
             OrdenIngresoEntityMapper mapper,
             ArticuloIngresoLogisticaMapper articuloIngresoLogisticaMapper,

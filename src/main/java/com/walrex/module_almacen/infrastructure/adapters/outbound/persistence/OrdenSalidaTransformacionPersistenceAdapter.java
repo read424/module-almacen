@@ -11,9 +11,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.ma
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
@@ -30,7 +28,7 @@ import java.util.Date;
 public class OrdenSalidaTransformacionPersistenceAdapter implements OrdenSalidaLogisticaPort {
     private final OrdenSalidaRepository ordenSalidaRepository;
     private final DetailSalidaRepository detalleSalidaRepository;
-    private final ArticuloRepository articuloRepository;
+    private final ArticuloAlmacenRepository articuloRepository;
     private final DetailSalidaLoteRepository detalleSalidaLoteRepository;
     private final DetalleInventoryRespository detalleInventoryRespository;
     private final OrdenSalidaEntityMapper ordenSalidaEntityMapper;

@@ -12,7 +12,7 @@ import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.en
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.entity.OrdenIngresoEntity;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.ArticuloIngresoLogisticaMapper;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.mapper.OrdenIngresoEntityMapper;
-import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloRepository;
+import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.ArticuloAlmacenRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.DetailsIngresoRepository;
 import com.walrex.module_almacen.infrastructure.adapters.outbound.persistence.repository.OrdenIngresoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +39,7 @@ public class OrdenIngresoTransformacionPersistenceAdapterTest {
     private OrdenIngresoRepository ordenIngresoRepository;
 
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
 
     @Mock
     private DetailsIngresoRepository detalleRepository;

@@ -41,7 +41,7 @@ public class OrdenSalidaTransformacionPersistenceAdapterTest {
     @Mock
     private DetailSalidaRepository detalleSalidaRepository;
     @Mock
-    private ArticuloRepository articuloRepository;
+    private ArticuloAlmacenRepository articuloRepository;
     @Mock
     private DetailSalidaLoteRepository detalleSalidaLoteRepository;
     @Mock
