@@ -1,14 +1,14 @@
 package com.walrex.module_almacen.infrastructure.adapters.inbound.rest.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -20,7 +20,6 @@ public class OrdenIngresoLogisticaRequestDto {
     @Valid
     private MotivoIngresoLogisticaRequestDto motivo;
 
-    @NotNull
     private Integer id_orden;
 
     @NotNull(message = "La fecha de ingreso es obligatoria")
@@ -37,6 +36,7 @@ public class OrdenIngresoLogisticaRequestDto {
 
     private LocalDateTime fec_ref;
 
+    @JsonProperty("comprobante_ref")
     private String comprobanteRef;
 
     @NotNull(message = "Cliente/Proveedor es obligatorio")
